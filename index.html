@@ -1,0 +1,2454 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BuildTracker - Construction Project Management</title>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+:root{--primary:#e65100;--primary-dark:#ac1900;--secondary:#1565c0;--bg:#f3f4f6;--surface:#ffffff;--text:#1f2937;--text-light:#6b7280;--border:#e5e7eb;--success:#10b981;--warning:#f59e0b;--danger:#ef4444}
+body.dark{--bg:#0f172a;--surface:#1e293b;--text:#e2e8f0;--text-light:#94a3b8;--border:#334155}
+body{background:var(--bg);color:var(--text);min-height:100vh;transition:background .25s,color .25s}
+
+/* DARK MODE overrides */
+body.dark .card,body.dark .stat-card,body.dark .project-card,body.dark .team-card,body.dark .ov-card,body.dark .metric-card{background:var(--surface);border-color:var(--border);color:var(--text)}
+body.dark .card-header,body.dark .modal-header{background:var(--surface);border-color:var(--border)}
+body.dark .data-table th{background:#1e293b;color:var(--text-light)}
+body.dark .data-table td{border-color:var(--border)}
+body.dark .data-table tbody tr:hover{background:#273549}
+body.dark .nav-tab{color:var(--text-light)}
+body.dark .nav-tab:hover{background:#1e293b;color:var(--text)}
+body.dark .nav-tab.active{background:#1e3a5f;color:#f97316}
+body.dark .nav-tabs{border-color:var(--border)}
+body.dark .search-input,body.dark .search-select,body.dark .form-group input,body.dark .form-group select,body.dark .form-group textarea{background:#1e293b;border-color:var(--border);color:var(--text)}
+body.dark .search-input::placeholder,body.dark .form-group input::placeholder,body.dark .form-group textarea::placeholder{color:var(--text-light)}
+body.dark .modal{background:#1e293b}
+body.dark .modal-overlay{background:rgba(0,0,0,.7)}
+body.dark .doc-item{background:#1e293b;border-color:var(--border)}
+body.dark .doc-item:hover{background:#273549;border-color:#475569}
+body.dark .upload-zone{border-color:var(--border)}
+body.dark .upload-zone:hover{background:#1e3a5f}
+body.dark .notif-dropdown{background:#1e293b;border-color:var(--border)}
+body.dark .notif-item{border-color:var(--border)}
+body.dark .detail-header{background:var(--surface)}
+body.dark .btn-secondary{background:#334155;color:var(--text);border-color:var(--border)}
+body.dark .currency-select{background:rgba(255,255,255,.1)}
+body.dark .view-btn{background:#1e293b;color:var(--text-light)}
+body.dark .view-btn.active{background:var(--primary);color:white}
+body.dark .email-preview{background:#0f172a;border-color:var(--border)}
+body.dark .timeline::before{background:var(--border)}
+body.dark .activity-item{border-color:var(--border)}
+body.dark .progress-bar{background:#334155}
+body.dark .proj-health-bar{background:#334155}
+body.dark #catChips > div{background:#1e293b;border-color:var(--border)}
+/* DARK MODE — Gantt */
+body.dark .gantt-grid th{background:#1e293b;border-color:var(--border)}
+body.dark .gantt-grid td{border-color:var(--border)}
+body.dark .gantt-track{background:#334155}
+body.dark .gantt-months-row th{background:#1e3a5f;color:#93c5fd;border-color:#334155}
+body.dark .gantt-month-cell{background:#1e3a5f!important;color:#93c5fd!important;border-color:#334155!important}
+
+/* LANDING */
+.landing{display:none;min-height:100vh;background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%)}
+.landing.active{display:block}
+.nav{padding:1.5rem 3rem;display:flex;justify-content:space-between;align-items:center}
+.logo{color:white;font-size:1.8rem;font-weight:bold;display:flex;align-items:center;gap:.5rem}
+.logo i{color:#f97316}
+.nav-buttons{display:flex;gap:1rem}
+.btn{padding:.6rem 1.4rem;border-radius:8px;font-weight:600;cursor:pointer;border:none;font-size:.95rem;transition:all .2s ease}
+.btn:hover{opacity:.85;transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:white;border:1px solid rgba(255,255,255,.3)}
+.btn-primary{background:#f97316;color:white}
+.btn-secondary{background:var(--border);color:var(--text)}
+.btn-white{background:white;color:#1e3a5f}
+.btn-sm{padding:.35rem .8rem;font-size:.8rem}
+.btn-danger{background:#fee2e2;color:#991b1b}
+.btn-success{background:#d1fae5;color:#065f46}
+.hero{padding:4rem 3rem;text-align:center;color:white}
+.hero h1{font-size:3rem;margin-bottom:1.5rem}
+.hero h1 span{color:#f97316}
+.hero p{font-size:1.2rem;color:#94a3b8;max-width:600px;margin:0 auto 2rem}
+.hero-buttons{display:flex;gap:1rem;justify-content:center}
+.trust-bar{display:flex;justify-content:center;gap:3rem;padding:1.5rem 3rem;background:rgba(255,255,255,.04);border-top:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.07)}
+.trust-stat{text-align:center}
+.trust-stat .num{font-size:1.8rem;font-weight:800;color:#f97316}
+.trust-stat .lbl{font-size:.8rem;color:#94a3b8;margin-top:.2rem}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1.5rem;padding:3rem;background:#0f172a}
+.feature-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:1.5rem;text-align:center;transition:all .2s ease}
+.feature-card:hover{background:rgba(255,255,255,.09);transform:translateY(-3px)}
+.feature-card i{font-size:2rem;color:#f97316;margin-bottom:.5rem}
+.feature-card h3{color:white;margin-bottom:.5rem;font-size:1rem}
+.feature-card p{color:#94a3b8;font-size:.85rem}
+
+/* APP SHELL */
+.app{display:none}
+.app.active{display:block}
+.app-header{background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:white;padding:.9rem 2rem;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.header-right{display:flex;align-items:center;gap:1rem}
+.currency-select{padding:.4rem;border-radius:6px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);color:white;cursor:pointer}
+.user-badge{background:rgba(255,255,255,.2);padding:.3rem .8rem;border-radius:20px;font-size:.85rem}
+
+/* NOTIFICATION BELL */
+.notif-wrap{position:relative;cursor:pointer}
+.notif-bell{background:rgba(255,255,255,.15);border:none;color:white;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:background .2s}
+.notif-bell:hover{background:rgba(255,255,255,.3)}
+.notif-badge{position:absolute;top:-4px;right:-4px;background:#ef4444;color:white;font-size:.6rem;font-weight:700;width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--primary-dark)}
+.notif-dropdown{display:none;position:absolute;top:42px;right:0;background:white;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.15);min-width:280px;z-index:200;border:1px solid var(--border)}
+.notif-dropdown.open{display:block}
+.notif-dropdown h4{padding:.75rem 1rem;font-size:.82rem;color:var(--text-light);border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em}
+.notif-item{padding:.65rem 1rem;border-bottom:1px solid var(--border);font-size:.85rem;display:flex;align-items:center;gap:.6rem}
+.notif-item:last-child{border-bottom:none}
+.notif-item i{color:var(--danger);flex-shrink:0}
+.notif-empty{padding:1rem;text-align:center;color:var(--text-light);font-size:.85rem}
+
+/* CONTAINER & TABS */
+.container{max-width:1400px;margin:0 auto;padding:1.5rem}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
+.stat-card{background:var(--surface);padding:1rem 1.25rem;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.1);border-left:4px solid var(--primary);transition:all .2s ease}
+.stat-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.12)}
+.stat-value{font-size:1.6rem;font-weight:bold}
+.stat-label{color:var(--text-light);font-size:.78rem;margin-top:.2rem}
+.nav-tabs{display:flex;gap:.25rem;border-bottom:2px solid var(--border);margin-bottom:1.5rem;overflow-x:auto;flex-wrap:nowrap}
+.nav-tab{padding:.7rem 1rem;background:none;border:none;color:var(--text-light);cursor:pointer;font-weight:500;border-bottom:3px solid transparent;white-space:nowrap;font-size:.9rem;border-radius:6px 6px 0 0;transition:all .15s ease}
+.nav-tab:hover{background:#f3f4f6;color:var(--text)}
+.nav-tab.active{color:var(--primary);border-bottom-color:var(--primary);background:#fff7f0}
+.content-section{display:none}
+.content-section.active{display:block;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS & TABLES */
+.card{background:var(--surface);border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.1);margin-bottom:1.5rem;overflow:hidden;transition:box-shadow .2s}
+.card:hover{box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.card-header{padding:.9rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.5rem}
+.card-header h3{font-size:1rem;display:flex;align-items:center;gap:.5rem}
+.card-body{padding:1rem;overflow-x:auto}
+.data-table{width:100%;border-collapse:collapse}
+.data-table th{text-align:left;padding:.55rem .75rem;background:#f9fafb;color:var(--text-light);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em}
+.data-table td{padding:.6rem .75rem;border-bottom:1px solid var(--border);font-size:.88rem}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tbody tr:hover{background:#f9fafb;cursor:pointer}
+.badge{display:inline-block;padding:.2rem .55rem;border-radius:20px;font-size:.7rem;font-weight:600}
+.badge-success{background:#d1fae5;color:#065f46}
+.badge-warning{background:#fef3c7;color:#92400e}
+.badge-danger{background:#fee2e2;color:#991b1b}
+.badge-info{background:#dbeafe;color:#1e40af}
+.badge-gray{background:#f3f4f6;color:#374151}
+.action-btn{padding:.3rem .6rem;border:none;border-radius:4px;cursor:pointer;font-size:.75rem;margin-left:.25rem;transition:all .15s}
+.action-btn:hover{opacity:.8;transform:scale(1.05)}
+.action-btn-delete{background:#fee2e2;color:#991b1b}
+.action-btn-edit{background:#dbeafe;color:#1e40af}
+.action-btn-email{background:#d1fae5;color:#065f46}
+
+/* SEARCH BAR */
+.search-bar{display:flex;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap;align-items:center}
+.search-input{flex:1;min-width:200px;padding:.55rem .9rem;border:1px solid var(--border);border-radius:8px;font-size:.9rem;transition:border-color .2s}
+.search-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(230,81,0,.1)}
+.search-select{padding:.55rem .75rem;border:1px solid var(--border);border-radius:8px;font-size:.9rem;background:white}
+
+/* PROJECT CARDS */
+.project-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.25rem;margin-bottom:1.5rem}
+.project-card{background:white;border-radius:12px;padding:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.1);border:1px solid var(--border);cursor:pointer;transition:all .2s ease}
+.project-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.12);border-color:var(--primary)}
+.pc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.75rem}
+.pc-title{font-weight:700;font-size:1rem;margin-bottom:.2rem}
+.pc-client{font-size:.8rem;color:var(--text-light)}
+.pc-ring-wrap{position:relative;width:54px;height:54px;flex-shrink:0}
+.pc-ring-wrap svg{transform:rotate(-90deg)}
+.pc-ring-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:var(--text)}
+.pc-budget{margin:.75rem 0}
+.pc-budget-label{display:flex;justify-content:space-between;font-size:.75rem;color:var(--text-light);margin-bottom:.3rem}
+.pc-footer{display:flex;justify-content:space-between;align-items:center;margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)}
+.pc-deadline{font-size:.75rem;color:var(--text-light)}
+
+/* PROJECT DETAIL */
+.project-detail{display:none}
+.project-detail.active{display:block}
+.back-btn{background:none;border:none;color:var(--primary);cursor:pointer;font-size:1rem;display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;padding:.4rem 0;transition:color .15s}
+.back-btn:hover{color:var(--primary-dark)}
+.detail-header{background:var(--surface);border-radius:10px;padding:1.5rem;margin-bottom:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.detail-header h2{font-size:1.4rem;margin-bottom:.5rem}
+.detail-meta{display:flex;gap:1.5rem;color:var(--text-light);font-size:.88rem;flex-wrap:wrap;margin-top:.5rem}
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem}
+.metric-card{background:var(--surface);padding:1.1rem;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.1);transition:all .2s}
+.metric-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.metric-card h4{color:var(--text-light);font-size:.72rem;text-transform:uppercase;margin-bottom:.4rem}
+.metric-card .value{font-size:1.4rem;font-weight:bold}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+@media(max-width:900px){.two-col{grid-template-columns:1fr}}
+
+/* TIMELINE */
+.timeline{position:relative;padding-left:1.5rem}
+.timeline::before{content:'';position:absolute;left:.25rem;top:0;bottom:0;width:2px;background:var(--border)}
+.timeline-item{position:relative;padding-bottom:1.1rem}
+.timeline-item::before{content:'';position:absolute;left:-1.25rem;top:.25rem;width:10px;height:10px;border-radius:50%;background:var(--secondary);border:2px solid white;box-shadow:0 0 0 2px var(--secondary)}
+.timeline-item.completed::before{background:var(--success);box-shadow:0 0 0 2px var(--success)}
+.timeline-date{font-size:.7rem;color:var(--text-light)}
+.timeline-title{font-weight:600;font-size:.88rem}
+
+/* GANTT */
+.gantt-outer{overflow-x:auto;padding:.5rem 0}
+.gantt-grid{width:100%;border-collapse:collapse;min-width:800px;font-size:.82rem}
+.gantt-grid th{padding:.5rem .6rem;background:#f9fafb;color:var(--text-light);font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}
+.gantt-grid td{padding:.35rem .6rem;border-bottom:1px solid #f3f4f6;vertical-align:middle}
+.gantt-label-col{width:200px;min-width:160px;font-weight:500}
+.gantt-date-col{width:85px;font-size:.75rem;color:var(--text-light);white-space:nowrap}
+.gantt-bar-col{position:relative}
+.gantt-months-row th{padding:.3rem .4rem;font-size:.68rem;color:var(--text-light);font-weight:700;border-right:1px solid var(--border);background:#f0f4ff;text-align:center}
+.gantt-month-cell{color:#3730a3;background:#eef2ff}
+.gantt-track{position:relative;height:24px;border-radius:4px;background:#f3f4f6}
+.gantt-bar{position:absolute;height:24px;border-radius:4px;top:0;display:flex;align-items:center;padding:0 7px;font-size:.68rem;color:white;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .2s}
+.gantt-bar:hover{opacity:.85}
+.gantt-today{position:absolute;top:-4px;bottom:-4px;width:2px;background:#ef4444;z-index:5}
+.gantt-today::after{content:'Today';position:absolute;top:-18px;left:4px;font-size:.6rem;color:#ef4444;font-weight:700;white-space:nowrap}
+.gantt-milestone{position:absolute;top:2px;font-size:1rem;line-height:1;color:var(--secondary);transform:translateX(-50%)}
+.gantt-milestone.done{color:var(--success)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.active{display:flex}
+.modal{background:var(--surface);border-radius:12px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-lg{max-width:700px}
+.modal-header{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:white;z-index:1}
+.modal-header h3{font-size:1rem;font-weight:600}
+.modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--text-light);line-height:1}
+.modal-body{padding:1.25rem}
+.modal-footer{padding:1rem 1.25rem;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:.5rem}
+
+/* FORMS */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem}
+.form-group{margin-bottom:.9rem}
+.form-group label{display:block;margin-bottom:.3rem;font-weight:600;font-size:.83rem;color:var(--text)}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:.5rem .75rem;border:1px solid var(--border);border-radius:6px;font-size:.9rem;font-family:inherit;transition:border-color .2s}
+.form-group textarea{resize:vertical;min-height:80px}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(230,81,0,.1)}
+
+/* DOCUMENTS */
+.doc-list{display:flex;flex-direction:column;gap:.5rem}
+.doc-item{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:#f9fafb;border-radius:8px;border:1px solid var(--border);transition:all .2s}
+.doc-item:hover{background:#f0f4ff;border-color:#bfdbfe}
+.doc-icon{width:36px;height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-weight:600;font-size:.88rem;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.doc-meta{font-size:.75rem;color:var(--text-light)}
+.upload-zone{border:2px dashed var(--border);border-radius:10px;padding:2rem;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover{border-color:var(--primary);background:#fff7f0}
+.upload-zone i{font-size:2.5rem;color:var(--text-light);margin-bottom:.5rem}
+.upload-zone p{color:var(--text-light);font-size:.9rem}
+
+/* TEAM */
+.team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem}
+.team-card{background:var(--surface);border-radius:10px;padding:1.25rem;box-shadow:0 1px 3px rgba(0,0,0,.1);text-align:center;border:1px solid var(--border);transition:all .2s}
+.team-card:hover{transform:translateY(-2px);box-shadow:0 5px 15px rgba(0,0,0,.1)}
+.team-avatar{width:56px;height:56px;border-radius:50%;margin:0 auto .75rem;display:flex;align-items:center;justify-content:center;font-size:1.4rem;font-weight:bold;color:white}
+.team-name{font-weight:600;margin-bottom:.25rem}
+.team-role{font-size:.8rem;color:var(--text-light)}
+
+/* OVERVIEW */
+.overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.ov-card{background:white;border-radius:10px;padding:1.1rem 1.25rem;box-shadow:0 1px 3px rgba(0,0,0,.1);border-top:3px solid var(--primary);transition:all .2s}
+.ov-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.ov-label{font-size:.73rem;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem}
+.ov-value{font-size:1.5rem;font-weight:700}
+.ov-sub{font-size:.75rem;color:var(--text-light);margin-top:.2rem}
+.proj-health-bar{height:6px;border-radius:3px;background:#e5e7eb;overflow:hidden;margin-top:.3rem}
+.proj-health-fill{height:6px;border-radius:3px;transition:width .4s ease}
+.activity-item{display:flex;gap:.75rem;padding:.65rem 0;border-bottom:1px solid var(--border);font-size:.85rem}
+.activity-item:last-child{border-bottom:none}
+.activity-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:.35rem}
+
+/* PRINT / PDF */
+@media print{
+  *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  .app-header,.nav-tabs,.search-bar,.action-btn,.back-btn,.btn,.modal-overlay,.notif-wrap,
+  .view-toggle,.ov-sub,.landing{display:none!important}
+  body{background:white!important;color:#111!important;font-size:10pt;margin:0}
+  .app{display:block!important}
+  .container{max-width:100%!important;padding:.5cm!important}
+  .project-detail,.project-detail.active{display:block!important}
+  #projectsView{display:block!important}
+  .card{box-shadow:none!important;border:1pt solid #ccc!important;margin-bottom:.4cm;break-inside:avoid}
+  .card-header{background:#f5f5f5!important;border-bottom:1pt solid #ccc!important;padding:.3cm .4cm!important}
+  .card-header h3{font-size:10pt!important}
+  .card-body{padding:.3cm .4cm!important;overflow:visible!important}
+  .data-table{width:100%;border-collapse:collapse}
+  .data-table th{background:#f0f0f0!important;color:#333!important;font-size:8pt;padding:3pt 5pt!important;border:0.5pt solid #bbb!important}
+  .data-table td{font-size:9pt;padding:3pt 5pt!important;border:0.5pt solid #ddd!important}
+  .data-table tbody tr:hover{background:none!important}
+  .stats-grid,.metrics-grid,.overview-grid{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:.3cm!important}
+  .stat-card,.metric-card,.ov-card{border:0.5pt solid #ccc!important;box-shadow:none!important;padding:.3cm!important;break-inside:avoid}
+  .two-col{display:grid!important;grid-template-columns:1fr 1fr!important;gap:.3cm}
+  .badge{border:0.5pt solid currentColor!important}
+  .progress-bar,.proj-health-bar{border:0.5pt solid #ddd!important}
+  .gantt-outer{overflow:visible!important}
+  .gantt-grid{font-size:7pt!important;min-width:0!important}
+  .empty-state{padding:.5cm!important;font-size:9pt}
+  .detail-header{border:1pt solid #ccc!important;box-shadow:none!important}
+  .timeline::before{background:#ccc!important}
+  /* Print header */
+  .container::before{content:'BuildTracker — Construction Management';display:block;font-size:13pt;font-weight:800;color:#e65100!important;border-bottom:2pt solid #e65100;padding-bottom:.2cm;margin-bottom:.4cm}
+  @page{margin:1.5cm;size:A4}
+}
+
+/* PROGRESS BAR */
+.progress-bar{background:#e5e7eb;border-radius:4px;height:6px;overflow:hidden;margin-top:.3rem}
+.progress-fill{height:6px;border-radius:4px;background:var(--success);transition:width .4s ease}
+.progress-fill.warn{background:var(--warning)}
+.progress-fill.danger{background:var(--danger)}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:3rem;color:var(--text-light)}
+.empty-state .es-icon{width:64px;height:64px;border-radius:50%;background:#f3f4f6;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:1.6rem;color:var(--text-light)}
+
+/* EMAIL PREVIEW */
+.email-preview{background:#f9fafb;border:1px solid var(--border);border-radius:8px;padding:1.25rem;font-family:monospace;font-size:.85rem;white-space:pre-wrap;max-height:300px;overflow-y:auto}
+
+/* VIEW TOGGLE */
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:7px;overflow:hidden}
+.view-btn{padding:.3rem .65rem;border:none;background:white;cursor:pointer;font-size:.82rem;color:var(--text-light);transition:all .15s}
+.view-btn.active{background:var(--primary);color:white}
+
+/* MOBILE RESPONSIVE */
+@media(max-width:768px){
+  .app-header{padding:.65rem 1rem;flex-wrap:wrap;gap:.4rem}
+  .app-header .logo{font-size:1.3rem}
+  .header-right{gap:.4rem;flex-wrap:wrap}
+  .header-right .btn{padding:.3rem .55rem;font-size:.75rem}
+  .currency-select{font-size:.78rem;padding:.3rem .4rem}
+  .user-badge{font-size:.75rem;padding:.25rem .5rem}
+  .container{padding:.75rem}
+  .stats-grid{grid-template-columns:repeat(2,1fr);gap:.6rem}
+  .stat-value{font-size:1.2rem}
+  .nav-tabs{gap:0;padding-bottom:0}
+  .nav-tab{padding:.55rem .6rem;font-size:.78rem}
+  .nav-tab i{display:none}
+  .project-cards-grid{grid-template-columns:1fr}
+  .two-col{grid-template-columns:1fr!important}
+  .metrics-grid{grid-template-columns:repeat(2,1fr)}
+  .overview-grid{grid-template-columns:repeat(2,1fr)}
+  .form-row{grid-template-columns:1fr!important}
+  .search-bar{flex-direction:column;align-items:stretch}
+  .search-bar .btn{width:100%;justify-content:center;display:flex}
+  .search-input,.search-select{width:100%}
+  .modal{max-width:100%;margin:.5rem;border-radius:10px}
+  .modal-lg{max-width:calc(100vw - 1rem)}
+  .modal-overlay{padding:.5rem;align-items:flex-end}
+  .modal-overlay .modal{max-height:92vh}
+  .card-body{overflow-x:auto}
+  .data-table{min-width:500px}
+  .team-grid{grid-template-columns:repeat(2,1fr)}
+  .detail-header h2{font-size:1.1rem}
+  .detail-meta{gap:.75rem;font-size:.8rem}
+  .hero{padding:2rem 1.5rem}
+  .hero h1{font-size:1.8rem}
+  .hero p{font-size:1rem}
+  .nav{padding:1rem 1.5rem}
+  .trust-bar{gap:1.5rem;flex-wrap:wrap;padding:1rem 1.5rem}
+  .features-grid{padding:1.5rem;grid-template-columns:repeat(2,1fr)}
+  .hero-buttons{flex-direction:column;align-items:center}
+  .gantt-outer{overflow-x:auto}
+  .pc-ring-wrap{width:44px;height:44px}
+  .ov-card{padding:.8rem 1rem}
+  .ov-value{font-size:1.2rem}
+}
+@media(max-width:480px){
+  .stats-grid{grid-template-columns:repeat(2,1fr)}
+  .metrics-grid{grid-template-columns:1fr 1fr}
+  .overview-grid{grid-template-columns:1fr}
+  .team-grid{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:1fr}
+  .nav-tab{padding:.5rem .45rem;font-size:.72rem}
+  .trust-bar{display:grid;grid-template-columns:1fr 1fr}
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+<!-- LANDING -->
+<div class="landing active" id="landing">
+  <div class="nav">
+    <div class="logo"><i class="fas fa-hard-hat"></i> BuildTracker</div>
+    <div class="nav-buttons">
+      <button class="btn btn-ghost" id="loginBtn"><i class="fas fa-sign-in-alt"></i> Login</button>
+      <button class="btn btn-primary" id="getStartedBtn">Get Started</button>
+    </div>
+  </div>
+  <div class="hero">
+    <h1>Construction Project<br><span>Management Made Simple</span></h1>
+    <p>Track projects, manage budgets, generate quotes, handle invoices, and grow your construction business — all in one place.</p>
+    <div class="hero-buttons">
+      <button class="btn btn-primary" id="startFreeBtn"><i class="fas fa-rocket"></i> Start Free</button>
+      <button class="btn btn-white" id="demoBtn"><i class="fas fa-play"></i> Live Demo</button>
+    </div>
+  </div>
+  <div class="trust-bar">
+    <div class="trust-stat"><div class="num">500+</div><div class="lbl">Projects Managed</div></div>
+    <div class="trust-stat"><div class="num">R2B+</div><div class="lbl">Budget Tracked</div></div>
+    <div class="trust-stat"><div class="num">98%</div><div class="lbl">Uptime</div></div>
+    <div class="trust-stat"><div class="num">150+</div><div class="lbl">Happy Contractors</div></div>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card"><i class="fas fa-project-diagram"></i><h3>Projects</h3><p>Track all your projects with real-time budget monitoring</p></div>
+    <div class="feature-card"><i class="fas fa-dollar-sign"></i><h3>Budgets</h3><p>Live budget tracking with overspend alerts</p></div>
+    <div class="feature-card"><i class="fas fa-file-invoice-dollar"></i><h3>Quotes & Invoices</h3><p>Generate professional quotes and track payments</p></div>
+    <div class="feature-card"><i class="fas fa-users"></i><h3>Team Management</h3><p>Assign tasks and manage your crew</p></div>
+    <div class="feature-card"><i class="fas fa-clipboard-list"></i><h3>Daily Logs</h3><p>Log weather, crew and daily progress notes</p></div>
+    <div class="feature-card"><i class="fas fa-chart-gantt"></i><h3>Gantt Charts</h3><p>Visual project timelines and milestone tracking</p></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app" id="app">
+  <div class="app-header">
+    <div class="logo"><i class="fas fa-hard-hat"></i> BuildTracker</div>
+    <div class="header-right">
+      <select class="currency-select" id="currency">
+        <option value="ZAR">ZAR (R)</option>
+        <option value="USD">USD ($)</option>
+        <option value="EUR">EUR (€)</option>
+        <option value="GBP">GBP (£)</option>
+      </select>
+      <div class="notif-wrap" id="notifWrap">
+        <button class="notif-bell" id="notifBtn"><i class="fas fa-bell"></i></button>
+        <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+        <div class="notif-dropdown" id="notifDropdown">
+          <h4><i class="fas fa-bell"></i> Alerts</h4>
+          <div id="notifList"></div>
+        </div>
+      </div>
+      <span class="user-badge" id="userBadge"><i class="fas fa-user"></i> Admin</span>
+      <span id="planBadge" onclick="app.openBilling()" style="cursor:pointer;padding:.25rem .6rem;border-radius:20px;font-size:.75rem;font-weight:600" title="Manage billing"></span>
+      <button class="btn btn-ghost btn-sm" id="darkToggle" onclick="app.toggleDark()" title="Toggle dark mode"><i class="fas fa-moon"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="app.openChangePw()" title="Change password"><i class="fas fa-key"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="app.exportData()" title="Export backup"><i class="fas fa-download"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="app.importData()" title="Import backup"><i class="fas fa-upload"></i></button>
+      <button class="btn btn-ghost btn-sm" onclick="app.exportPDF()" title="Print / PDF"><i class="fas fa-print"></i></button>
+      <button class="btn btn-ghost btn-sm" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+
+  <!-- PROJECTS VIEW -->
+  <div class="container" id="projectsView">
+    <div class="stats-grid" id="statsGrid"></div>
+    <div class="nav-tabs" id="mainTabs">
+      <button class="nav-tab active" data-tab="overview"><i class="fas fa-chart-pie"></i> Overview</button>
+      <button class="nav-tab" data-tab="projects"><i class="fas fa-building"></i> Projects</button>
+      <button class="nav-tab" data-tab="tasks"><i class="fas fa-tasks"></i> Tasks</button>
+      <button class="nav-tab" data-tab="quotes"><i class="fas fa-file-invoice"></i> Quotes</button>
+      <button class="nav-tab" data-tab="invoices"><i class="fas fa-file-invoice-dollar"></i> Invoices</button>
+      <button class="nav-tab" data-tab="budget"><i class="fas fa-book-open"></i> Budget</button>
+      <button class="nav-tab" data-tab="clients"><i class="fas fa-users"></i> Clients</button>
+      <button class="nav-tab" data-tab="logs"><i class="fas fa-clipboard-list"></i> Logs</button>
+      <button class="nav-tab" data-tab="documents"><i class="fas fa-folder-open"></i> Documents</button>
+      <button class="nav-tab" data-tab="team"><i class="fas fa-hard-hat"></i> Team</button>
+    </div>
+    <div class="content-section active" id="overview"></div>
+    <div class="content-section" id="projects"></div>
+    <div class="content-section" id="tasks"></div>
+    <div class="content-section" id="quotes"></div>
+    <div class="content-section" id="invoices"></div>
+    <div class="content-section" id="budget"></div>
+    <div class="content-section" id="clients"></div>
+    <div class="content-section" id="logs"></div>
+    <div class="content-section" id="documents"></div>
+    <div class="content-section" id="team"></div>
+  </div>
+
+  <!-- PROJECT DETAIL -->
+  <div class="container project-detail" id="projectDetail">
+    <button class="back-btn" id="backBtn"><i class="fas fa-arrow-left"></i> Back to Projects</button>
+    <div class="detail-header" id="detailHeaderBlock">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+        <div>
+          <h2 id="detailProjectName"></h2>
+          <div class="detail-meta" id="detailMeta"></div>
+        </div>
+        <div style="display:flex;gap:.5rem">
+          <button class="btn btn-sm btn-primary" onclick="app.exportPDF()"><i class="fas fa-file-pdf"></i> Export PDF</button>
+        </div>
+      </div>
+      <div style="margin-top:1rem" id="detailBudgetBar"></div>
+    </div>
+    <div class="metrics-grid" id="detailMetrics"></div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-tasks"></i> Tasks</h3><button class="btn btn-primary btn-sm" onclick="app.openModal('task')">+ Add</button></div>
+        <div class="card-body" id="detailTasks"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-flag"></i> Milestones</h3><button class="btn btn-primary btn-sm" onclick="app.openModal('milestone')">+ Add</button></div>
+        <div class="card-body" id="detailMilestones"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-chart-gantt"></i> Gantt Chart</h3></div>
+      <div class="card-body" id="detailGantt"></div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-file-invoice"></i> Quotes</h3></div>
+        <div class="card-body" id="detailQuotes"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-file-invoice-dollar"></i> Invoices</h3></div>
+        <div class="card-body" id="detailInvoices"></div>
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-clipboard-list"></i> Daily Logs</h3></div>
+        <div class="card-body" id="detailLogs"></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><h3><i class="fas fa-users"></i> Team Assigned</h3></div>
+        <div class="card-body" id="detailTeam"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><h3><i class="fas fa-book-open"></i> Budget / Expenses</h3><button class="btn btn-primary btn-sm" onclick="app.openModal('expense')">+ Add Expense</button></div>
+      <div class="card-body" id="detailExpenses"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" id="modalBox">
+    <div class="modal-header">
+      <h3 id="modalTitle">Add</h3>
+      <button class="modal-close" id="modalCloseBtn">&times;</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-footer" id="modalFooter">
+      <button class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
+      <button class="btn btn-primary" id="modalSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="fileInput" style="display:none" multiple>
+
+<script>
+const COLORS = ['#e65100','#1565c0','#2e7d32','#6a1b9a','#00838f','#c62828','#4527a0','#00695c'];
+
+// =====================================================
+// SUPABASE + STRIPE CONFIGURATION
+// Replace these values with your project credentials
+// =====================================================
+const SUPABASE_URL = 'https://rldzltswtxcpkggaanzt.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_A_1udN3JRg-GiMziBfpnkA_jv9kmsTB';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const PLAN_LIMITS = {
+  free:     { projects: 3,  clients: 10, docs: false, label: 'Free' },
+  pro:      { projects: 25, clients: -1, docs: true,  label: 'Pro ($29/mo)' },
+  business: { projects: -1, clients: -1, docs: true,  label: 'Business ($79/mo)' },
+};
+
+const app = {
+  currency: 'ZAR',
+  currencies: {ZAR:{s:'R',r:1},USD:{s:'$',r:0.055},EUR:{s:'€',r:0.051},GBP:{s:'£',r:0.044}},
+  currentProjectId: null,
+  currentModal: null,
+  currentUser: null,
+  currentUserId: null,
+  projectView: 'table', // 'table' or 'cards'
+  userPlan: 'free',
+  userPlanStatus: 'active',
+  isDemoMode: false,
+
+  defaultData() {
+    return {
+      clients:[], projects:[], tasks:[], milestones:[],
+      quotes:[], invoices:[], logs:[], documents:[], team:[], expenses:[],
+      expenseCategories:[
+        {name:'Labour',color:'#1565c0',isDefault:true},
+        {name:'Materials',color:'#2e7d32',isDefault:true},
+        {name:'Equipment',color:'#6a1b9a',isDefault:true},
+        {name:'Subcontractor',color:'#e65100',isDefault:true},
+        {name:'Permits & Fees',color:'#00838f',isDefault:true},
+        {name:'Other',color:'#6b7280',isDefault:true}
+      ]
+    };
+  },
+
+  sampleData() {
+    return {
+      clients: [
+        {id:1,name:'John Smith',email:'john@smith.co.za',phone:'011 123 4567',company:'Smith Construction'},
+        {id:2,name:'Sarah Johnson',email:'sarah@devco.co.za',phone:'021 987 6543',company:'DevCo Properties'},
+        {id:3,name:'Mike Brown',email:'mike@brown.co.za',phone:'031 456 7890',company:'Brown Builders'}
+      ],
+      projects: [
+        {id:1,name:'Mall Renovation',clientId:1,status:'In Progress',budget:2500000,spent:1200000,startDate:'2026-01-15',deadline:'2026-06-30',description:'Full interior renovation of Southgate Mall.'},
+        {id:2,name:'Office Block Development',clientId:2,status:'Planning',budget:5000000,spent:250000,startDate:'2026-02-01',deadline:'2026-12-31',description:'New 6-storey office block in Sandton.'},
+        {id:3,name:'House Extension',clientId:3,status:'In Progress',budget:450000,spent:320000,startDate:'2026-01-20',deadline:'2026-03-15',description:'Double storey extension to existing dwelling.'},
+        {id:4,name:'Warehouse Construction',clientId:1,status:'Completed',budget:1800000,spent:1750000,startDate:'2025-08-01',deadline:'2025-12-15',description:'Industrial warehouse with loading bays.'}
+      ],
+      tasks: [
+        {id:1,name:'Foundation work',projectId:1,completed:true,dueDate:'2026-02-15',assignedTo:1},
+        {id:2,name:'Electrical installation',projectId:1,completed:false,dueDate:'2026-04-01',assignedTo:2},
+        {id:3,name:'Plumbing rough-in',projectId:2,completed:false,dueDate:'2026-05-15',assignedTo:null},
+        {id:4,name:'Roofing',projectId:3,completed:true,dueDate:'2026-02-28',assignedTo:1},
+        {id:5,name:'Interior painting',projectId:3,completed:false,dueDate:'2026-03-10',assignedTo:3},
+        {id:6,name:'Final inspections',projectId:4,completed:true,dueDate:'2025-12-10',assignedTo:2}
+      ],
+      milestones: [
+        {id:1,projectId:1,name:'Foundation Complete',date:'2026-02-15',completed:true},
+        {id:2,projectId:1,name:'Structure Watertight',date:'2026-04-01',completed:false},
+        {id:3,projectId:1,name:'Practical Completion',date:'2026-06-30',completed:false},
+        {id:4,projectId:2,name:'Planning Approval',date:'2026-03-01',completed:false},
+        {id:5,projectId:2,name:'Construction Start',date:'2026-06-01',completed:false},
+        {id:6,projectId:3,name:'Roof Complete',date:'2026-02-28',completed:true},
+        {id:7,projectId:3,name:'Handover',date:'2026-03-15',completed:false}
+      ],
+      quotes: [
+        {id:1,clientId:1,projectId:1,items:[{desc:'Labour',qty:1,rate:120000},{desc:'Materials',qty:1,rate:60000}],status:'Accepted',date:'2026-01-10'},
+        {id:2,clientId:2,projectId:2,items:[{desc:'Foundation works',qty:1,rate:1200000},{desc:'Superstructure',qty:1,rate:2000000}],status:'Pending',date:'2026-01-25'},
+        {id:3,clientId:3,projectId:3,items:[{desc:'Extension build',qty:1,rate:280000}],status:'Rejected',date:'2026-02-01'}
+      ],
+      invoices: [
+        {id:1,clientId:1,projectId:1,amount:600000,status:'Paid',date:'2026-02-01',dueDate:'2026-03-01'},
+        {id:2,clientId:2,projectId:2,amount:125000,status:'Pending',date:'2026-02-15',dueDate:'2026-03-15'},
+        {id:3,clientId:3,projectId:3,amount:160000,status:'Overdue',date:'2026-01-20',dueDate:'2026-02-20'}
+      ],
+      logs: [
+        {id:1,projectId:1,date:'2026-03-08',weather:'Sunny',crew:8,notes:'Completed concrete pouring for Section A.'},
+        {id:2,projectId:3,date:'2026-03-08',weather:'Cloudy',crew:4,notes:'Installed roof trusses. Weather delay in afternoon.'},
+        {id:3,projectId:1,date:'2026-03-07',weather:'Rainy',crew:6,notes:'Weather delay. Crew worked on interior framing.'}
+      ],
+      documents: [
+        {id:1,projectId:1,name:'Site Plan.pdf',type:'pdf',size:'2.4 MB',date:'2026-01-15',uploadedBy:'Admin'},
+        {id:2,projectId:1,name:'Contract.docx',type:'docx',size:'540 KB',date:'2026-01-16',uploadedBy:'Admin'},
+        {id:3,projectId:2,name:'BOQ.xlsx',type:'xlsx',size:'1.1 MB',date:'2026-02-03',uploadedBy:'Admin'}
+      ],
+      team: [
+        {id:1,name:'James Khumalo',role:'Site Foreman',email:'james@buildtracker.co.za',phone:'082 111 2222',color:COLORS[0]},
+        {id:2,name:'Thabo Dlamini',role:'Electrician',email:'thabo@buildtracker.co.za',phone:'083 333 4444',color:COLORS[1]},
+        {id:3,name:'Linda Nkosi',role:'Painter',email:'linda@buildtracker.co.za',phone:'084 555 6666',color:COLORS[2]}
+      ],
+      expenses: [
+        {id:1,projectId:1,description:'Site Labour - Foundation',type:'Labour',planned:320000,actual:310000,date:'2026-02-15',notes:''},
+        {id:2,projectId:1,description:'Concrete & Steel',type:'Materials',planned:480000,actual:520000,date:'2026-02-20',notes:'Steel price increase'},
+        {id:3,projectId:1,description:'Scaffolding Hire',type:'Equipment',planned:85000,actual:85000,date:'2026-01-20',notes:''},
+        {id:4,projectId:1,description:'Electrical Sub',type:'Subcontractor',planned:210000,actual:0,date:'2026-04-01',notes:'Pending start'},
+        {id:5,projectId:2,description:'Design & Planning',type:'Permits & Fees',planned:95000,actual:95000,date:'2026-02-10',notes:''},
+        {id:6,projectId:2,description:'Foundation Labour',type:'Labour',planned:600000,actual:0,date:'2026-06-01',notes:'Not started'},
+        {id:7,projectId:3,description:'Extension Labour',type:'Labour',planned:180000,actual:195000,date:'2026-02-01',notes:'Overtime required'},
+        {id:8,projectId:3,description:'Roofing Materials',type:'Materials',planned:95000,actual:88000,date:'2026-02-28',notes:''}
+      ],
+      expenseCategories:[
+        {name:'Labour',color:'#1565c0',isDefault:true},
+        {name:'Materials',color:'#2e7d32',isDefault:true},
+        {name:'Equipment',color:'#6a1b9a',isDefault:true},
+        {name:'Subcontractor',color:'#e65100',isDefault:true},
+        {name:'Permits & Fees',color:'#00838f',isDefault:true},
+        {name:'Other',color:'#6b7280',isDefault:true}
+      ]
+    };
+  },
+
+  escapeHtml(s) {
+    if(s===null||s===undefined) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  },
+
+  async load() {
+    try {
+      const [
+        {data:clients},{data:projects},{data:tasks},{data:milestones},
+        {data:quotes},{data:invoices},{data:logs},{data:documents},
+        {data:team},{data:expenses},{data:expenseCategories},{data:profile}
+      ] = await Promise.all([
+        sb.from('clients').select('*').order('created_at'),
+        sb.from('projects').select('*').order('created_at'),
+        sb.from('tasks').select('*').order('created_at'),
+        sb.from('milestones').select('*').order('date'),
+        sb.from('quotes').select('*').order('created_at'),
+        sb.from('invoices').select('*').order('created_at'),
+        sb.from('daily_logs').select('*').order('date',{ascending:false}),
+        sb.from('documents').select('*').order('created_at'),
+        sb.from('team_members').select('*').order('name'),
+        sb.from('expenses').select('*').order('date'),
+        sb.from('expense_categories').select('*').order('name'),
+        sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).single(),
+      ]);
+      this.data = {
+        clients:clients||[], projects:projects||[], tasks:tasks||[],
+        milestones:milestones||[], quotes:quotes||[], invoices:invoices||[],
+        logs:logs||[], documents:documents||[], team:team||[],
+        expenses:expenses||[], expenseCategories:expenseCategories||[]
+      };
+      this.userPlan = profile?.plan||'free';
+      this.userPlanStatus = profile?.plan_status||'active';
+      if(profile?.name) this.currentUser = profile.name;
+    } catch(e) { console.error('Load error:',e); this.data = this.defaultData(); }
+  },
+
+  async dbInsert(table, record) {
+    if(this.isDemoMode) { alert('Create an account to save data.'); return null; }
+    const {id, owner_id, ...rest} = record;
+    const {data, error} = await sb.from(table).insert({...rest, owner_id:this.currentUserId}).select().single();
+    if(error) { console.error(error); alert('Save failed: '+error.message); return null; }
+    return data;
+  },
+
+  async dbUpdate(table, id, changes) {
+    if(this.isDemoMode) { alert('Create an account to save data.'); return null; }
+    const {owner_id, ...safeChanges} = changes;
+    const {data, error} = await sb.from(table).update(safeChanges).eq('id',id).select().single();
+    if(error) { console.error(error); alert('Update failed: '+error.message); return null; }
+    return data;
+  },
+
+  async dbDelete(table, id) {
+    if(this.isDemoMode) { alert('Create an account to save data.'); return null; }
+    const {error} = await sb.from(table).delete().eq('id',id);
+    if(error) { console.error(error); alert('Delete failed: '+error.message); return false; }
+    return true;
+  },
+
+  savePrefs() {
+    localStorage.setItem('buildtracker_currency', this.currency);
+    localStorage.setItem('buildtracker_view', this.projectView);
+  },
+
+  async canDo(action) {
+    const limits = PLAN_LIMITS[this.userPlan]||PLAN_LIMITS.free;
+    if(action==='create_project') { return limits.projects===-1 || this.data.projects.length < limits.projects; }
+    if(action==='create_client')  { return limits.clients===-1  || this.data.clients.length  < limits.clients; }
+    if(action==='upload_doc')     { return limits.docs; }
+    return true;
+  },
+
+  showUpgradeModal() {
+    document.getElementById('modalTitle').textContent = 'Upgrade Your Plan';
+    document.getElementById('modalBox').className = 'modal modal-lg';
+    document.getElementById('modalFooter').style.display = 'none';
+    document.getElementById('modalBody').innerHTML = `
+      <div style="text-align:center;padding:1rem 0 .5rem">
+        <div style="font-size:3rem;margin-bottom:.5rem">🚀</div>
+        <h3 style="margin-bottom:.5rem">You've reached your plan limit</h3>
+        <p style="color:var(--text-light);margin-bottom:2rem">Upgrade to unlock unlimited projects, clients, and more.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem">
+        <div style="border:2px solid var(--border);border-radius:12px;padding:1.5rem;text-align:center">
+          <div style="font-size:1.2rem;font-weight:700;margin-bottom:.25rem">Pro</div>
+          <div style="font-size:2rem;font-weight:800;color:var(--primary)">$29<span style="font-size:.9rem;font-weight:400">/mo</span></div>
+          <ul style="text-align:left;margin:1rem 0;padding-left:1.2rem;font-size:.88rem;color:var(--text-light)">
+            <li>25 projects</li><li>Unlimited clients</li><li>Document uploads</li><li>5 team seats</li>
+          </ul>
+          <button class="btn btn-primary" style="width:100%" onclick="app.startCheckout('price_pro_monthly')">Upgrade to Pro</button>
+        </div>
+        <div style="border:2px solid var(--primary);border-radius:12px;padding:1.5rem;text-align:center;position:relative">
+          <div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--primary);color:white;padding:.15rem .6rem;border-radius:10px;font-size:.7rem;font-weight:600">MOST POPULAR</div>
+          <div style="font-size:1.2rem;font-weight:700;margin-bottom:.25rem">Business</div>
+          <div style="font-size:2rem;font-weight:800;color:var(--primary)">$79<span style="font-size:.9rem;font-weight:400">/mo</span></div>
+          <ul style="text-align:left;margin:1rem 0;padding-left:1.2rem;font-size:.88rem;color:var(--text-light)">
+            <li>Unlimited projects</li><li>Unlimited clients</li><li>Document uploads</li><li>20 team seats</li>
+          </ul>
+          <button class="btn btn-primary" style="width:100%" onclick="app.startCheckout('price_biz_monthly')">Upgrade to Business</button>
+        </div>
+      </div>`;
+    document.getElementById('modal').classList.add('active');
+    this.currentModal = 'upgrade';
+  },
+
+  async startCheckout(priceId) {
+    const {data,error} = await sb.functions.invoke('create-checkout-session',{
+      body:{price_id:priceId, success_url:window.location.href+'?upgraded=1', cancel_url:window.location.href}
+    });
+    if(error) return alert('Checkout error: '+error.message);
+    if(data?.url) window.location.href = data.url;
+  },
+
+  async openBilling() {
+    const {data,error} = await sb.functions.invoke('create-portal-session',{
+      body:{return_url:window.location.href}
+    });
+    if(error) return alert('Billing portal error: '+error.message);
+    if(data?.url) window.location.href = data.url;
+  },
+
+  applyDark(on) {
+    document.body.classList.toggle('dark', on);
+    const btn = document.getElementById('darkToggle');
+    if(btn) btn.innerHTML = on ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+  },
+
+  toggleDark() {
+    const on = !document.body.classList.contains('dark');
+    this.applyDark(on);
+    localStorage.setItem('buildtracker_dark', on ? '1' : '0');
+  },
+
+  init() {
+    if(localStorage.getItem('buildtracker_dark')==='1') this.applyDark(true);
+
+    sb.auth.onAuthStateChange(async (event, session) => {
+      if(session) {
+        this.currentUserId = session.user.id;
+        this.currentEmail = session.user.email;
+        this.currentUser = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+        this.isDemoMode = false;
+        this.currency = localStorage.getItem('buildtracker_currency')||'ZAR';
+        this.projectView = localStorage.getItem('buildtracker_view')||'table';
+        await this.load();
+        document.getElementById('currency').value = this.currency;
+        this.showApp();
+        if(window.location.search.includes('upgraded=1')) {
+          history.replaceState({},'',window.location.pathname);
+          alert('Plan upgraded! Welcome to BuildTracker '+(PLAN_LIMITS[this.userPlan]?.label||'Pro')+'.');
+        }
+      } else {
+        this.currentUserId = null;
+        this.currentUser = null;
+        this.currentEmail = null;
+        this.isDemoMode = false;
+        this.data = this.defaultData();
+        document.getElementById('app').classList.remove('active');
+        document.getElementById('landing').classList.add('active');
+      }
+    });
+
+    document.querySelectorAll('.nav-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+        document.getElementById(t.dataset.tab)?.classList.add('active');
+        this.render();
+      });
+    });
+    document.getElementById('getStartedBtn').addEventListener('click', () => this.openLoginModal(true));
+    document.getElementById('startFreeBtn').addEventListener('click', () => this.openLoginModal(true));
+    document.getElementById('demoBtn').addEventListener('click', () => {
+      this.currentUser = 'Demo User';
+      this.currentEmail = 'demo@buildtracker.app';
+      this.currentUserId = null;
+      this.isDemoMode = true;
+      this.data = this.sampleData();
+      this.showApp();
+    });
+    document.getElementById('loginBtn').addEventListener('click', () => this.openLoginModal(false));
+    document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+    document.getElementById('backBtn').addEventListener('click', () => this.showProjectsList());
+    document.getElementById('currency').addEventListener('change', e => { this.currency = e.target.value; this.savePrefs(); this.render(); });
+    document.getElementById('modalCloseBtn').addEventListener('click', () => this.closeModal());
+    document.getElementById('modalCancelBtn').addEventListener('click', () => this.closeModal());
+    document.getElementById('modalSaveBtn').addEventListener('click', () => this.saveModal());
+    document.getElementById('notifBtn').addEventListener('click', () => {
+      document.getElementById('notifDropdown').classList.toggle('open');
+    });
+    document.addEventListener('click', e => {
+      if(!document.getElementById('notifWrap').contains(e.target)) {
+        document.getElementById('notifDropdown').classList.remove('open');
+      }
+    });
+    document.getElementById('fileInput').addEventListener('change', e => this.handleFileUpload(e));
+  },
+
+  fmt(amount) {
+    const c = this.currencies[this.currency];
+    return c.s + Math.round(amount * c.r).toLocaleString('en-ZA');
+  },
+
+  showApp() {
+    document.getElementById('landing').classList.remove('active');
+    document.getElementById('app').classList.add('active');
+    document.getElementById('userBadge').innerHTML = `<i class="fas fa-user"></i> ${this.escapeHtml(this.currentUser||'User')}`;
+    document.getElementById('userBadge').title = this.currentEmail||'';
+    const planEl = document.getElementById('planBadge');
+    if(planEl) {
+      planEl.textContent = (PLAN_LIMITS[this.userPlan]?.label||'Free')+' Plan';
+      planEl.style.background = this.userPlan==='free' ? 'rgba(255,255,255,.15)' : 'rgba(249,115,22,.4)';
+    }
+    this.render();
+  },
+
+  async logout() {
+    await sb.auth.signOut();
+    // onAuthStateChange handles UI reset
+    this.showProjectsList();
+  },
+
+  render() {
+    this.renderStats();
+    this.renderOverview();
+    this.renderProjects();
+    this.renderTasks();
+    this.renderQuotes();
+    this.renderInvoices();
+    this.renderBudget();
+    this.renderClients();
+    this.renderLogs();
+    this.renderDocuments();
+    this.renderTeam();
+    this.renderNotifications();
+  },
+
+  renderStats() {
+    const ap = this.data.projects.filter(p => p.status !== 'Completed').length;
+    const tb = this.data.projects.reduce((s,p) => s+p.budget, 0);
+    const paid = this.data.invoices.filter(i => i.status === 'Paid').reduce((s,i) => s+i.amount, 0);
+    const done = this.data.tasks.filter(t => t.completed).length;
+    const total = this.data.tasks.length;
+    const pct = total ? Math.round(done/total*100) : 0;
+    const overdue = this.data.invoices.filter(i => i.status === 'Overdue').length;
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat-card" style="border-left-color:#e65100"><div class="stat-value">${ap}</div><div class="stat-label">Active Projects</div></div>
+      <div class="stat-card" style="border-left-color:#1565c0"><div class="stat-value">${this.fmt(tb)}</div><div class="stat-label">Total Budget</div></div>
+      <div class="stat-card" style="border-left-color:#10b981"><div class="stat-value">${this.fmt(paid)}</div><div class="stat-label">Invoices Paid</div></div>
+      <div class="stat-card" style="border-left-color:#f59e0b"><div class="stat-value">${pct}%</div><div class="stat-label">Tasks Complete</div></div>
+      <div class="stat-card" style="border-left-color:${overdue?'#ef4444':'#10b981'}"><div class="stat-value">${overdue}</div><div class="stat-label">Overdue Invoices</div></div>
+    `;
+  },
+
+  renderNotifications() {
+    const H = s => this.escapeHtml(s);
+    const today = new Date().toISOString().split('T')[0];
+    const overdueInv = this.data.invoices.filter(i => i.status === 'Overdue');
+    const overdueTasks = this.data.tasks.filter(t => !t.completed && t.dueDate && t.dueDate < today);
+    const all = [
+      ...overdueInv.map(i => ({icon:'fa-file-invoice-dollar', text:`Invoice INV-${String(i.id).padStart(4,'0')} overdue`})),
+      ...overdueTasks.map(t => {const p=this.data.projects.find(x=>x.id===t.projectId); return {icon:'fa-tasks', text:`Task &quot;${H(t.name)}&quot;${p?' on '+H(p.name):''} overdue`};})
+    ];
+    const count = all.length;
+    const badge = document.getElementById('notifBadge');
+    badge.style.display = count ? 'flex' : 'none';
+    badge.textContent = count > 9 ? '9+' : count;
+    document.getElementById('notifList').innerHTML = all.length
+      ? all.map(n=>`<div class="notif-item"><i class="fas ${n.icon}"></i><span>${n.text}</span></div>`).join('')
+      : '<div class="notif-empty"><i class="fas fa-check-circle" style="color:var(--success)"></i> All clear!</div>';
+  },
+
+  renderOverview() {
+    const H = s => this.escapeHtml(s);
+    const totalQuoted = this.data.quotes.reduce((s,q)=>s+this.quoteTotal(q),0);
+    const totalInvoiced = this.data.invoices.reduce((s,i)=>s+i.amount,0);
+    const totalPaid = this.data.invoices.filter(i=>i.status==='Paid').reduce((s,i)=>s+i.amount,0);
+    const outstanding = this.data.invoices.filter(i=>i.status!=='Paid').reduce((s,i)=>s+i.amount,0);
+    const recentLogs = [...this.data.logs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+    const wIcons = {Sunny:'☀️',Cloudy:'☁️',Rainy:'🌧️',Windy:'💨',Stormy:'⛈️'};
+
+    let html = `
+      <div class="overview-grid">
+        <div class="ov-card" style="border-top-color:#e65100"><div class="ov-label">Total Quoted</div><div class="ov-value">${this.fmt(totalQuoted)}</div><div class="ov-sub">${this.data.quotes.length} quote${this.data.quotes.length!==1?'s':''}</div></div>
+        <div class="ov-card" style="border-top-color:#1565c0"><div class="ov-label">Total Invoiced</div><div class="ov-value">${this.fmt(totalInvoiced)}</div><div class="ov-sub">${this.data.invoices.length} invoice${this.data.invoices.length!==1?'s':''}</div></div>
+        <div class="ov-card" style="border-top-color:#10b981"><div class="ov-label">Total Paid</div><div class="ov-value" style="color:var(--success)">${this.fmt(totalPaid)}</div><div class="ov-sub">${this.data.invoices.filter(i=>i.status==='Paid').length} paid</div></div>
+        <div class="ov-card" style="border-top-color:#f59e0b"><div class="ov-label">Outstanding</div><div class="ov-value" style="color:var(--warning)">${this.fmt(outstanding)}</div><div class="ov-sub">${this.data.invoices.filter(i=>i.status!=='Paid').length} unpaid</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem">
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-building"></i> Project Health</h3></div>
+          <div class="card-body">
+            <table class="data-table"><thead><tr><th>Project</th><th>Status</th><th>Budget Used</th><th>Tasks</th></tr></thead><tbody>`;
+
+    this.data.projects.forEach(p => {
+      const budgetPct = p.budget ? Math.min(Math.round(p.spent/p.budget*100),100) : 0;
+      const tasks = this.data.tasks.filter(t=>t.projectId===p.id);
+      const taskDone = tasks.filter(t=>t.completed).length;
+      const taskPct = tasks.length ? Math.round(taskDone/tasks.length*100) : 0;
+      const barColor = budgetPct>90?'var(--danger)':budgetPct>70?'var(--warning)':'var(--success)';
+      html += `<tr onclick="app.showProjectDetail('${p.id}')" style="cursor:pointer">
+        <td><strong>${H(p.name)}</strong></td>
+        <td>${this.statusBadge(p.status)}</td>
+        <td style="min-width:120px">
+          <div style="display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:.2rem"><span>${budgetPct}%</span></div>
+          <div class="proj-health-bar"><div class="proj-health-fill" style="width:${budgetPct}%;background:${barColor}"></div></div>
+        </td>
+        <td>${taskDone}/${tasks.length}</td>
+      </tr>`;
+    });
+
+    html += `</tbody></table></div></div>
+        <div class="card">
+          <div class="card-header"><h3><i class="fas fa-clock"></i> Recent Activity</h3></div>
+          <div class="card-body">`;
+
+    if(!recentLogs.length) {
+      html += `<div class="empty-state"><div class="es-icon"><i class="fas fa-clipboard-list"></i></div><p>No activity yet</p></div>`;
+    } else {
+      html += `<div>`;
+      recentLogs.forEach(l => {
+        const p = this.data.projects.find(x=>x.id===l.projectId);
+        html += `<div class="activity-item">
+          <div class="activity-dot"></div>
+          <div>
+            <div style="font-weight:600">${p?H(p.name):'General'} &mdash; ${wIcons[l.weather]||''} ${H(l.weather)}</div>
+            <div style="color:var(--text-light);font-size:.78rem">${l.date} &bull; ${l.crew||0} crew &bull; ${H(l.notes)}</div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    html += `</div></div>
+      </div>`;
+
+    document.getElementById('overview').innerHTML = html;
+  },
+
+  statusBadge(status) {
+    const map = {
+      'Completed':'badge-success','In Progress':'badge-warning','Planning':'badge-info',
+      'Accepted':'badge-success','Rejected':'badge-danger','Pending':'badge-warning',
+      'Paid':'badge-success','Overdue':'badge-danger','Done':'badge-success'
+    };
+    return `<span class="badge ${map[status]||'badge-gray'}">${status}</span>`;
+  },
+
+  renderProjects() {
+    const H = s => this.escapeHtml(s);
+    const filterStatus = document.getElementById('filterStatus')?.value || '';
+    const search = (document.getElementById('searchProjects')?.value || '').toLowerCase();
+    let projects = this.data.projects.filter(p => {
+      if(filterStatus && p.status !== filterStatus) return false;
+      if(search && !p.name.toLowerCase().includes(search)) return false;
+      return true;
+    });
+
+    let html = `
+      <div class="search-bar">
+        <input class="search-input" id="searchProjects" placeholder="Search projects..." oninput="app.renderProjects()" value="${H(document.getElementById('searchProjects')?.value||'')}">
+        <select class="search-select" id="filterStatus" onchange="app.renderProjects()">
+          <option value="">All Statuses</option>
+          <option value="Planning"${filterStatus==='Planning'?' selected':''}>Planning</option>
+          <option value="In Progress"${filterStatus==='In Progress'?' selected':''}>In Progress</option>
+          <option value="Completed"${filterStatus==='Completed'?' selected':''}>Completed</option>
+        </select>
+        <div class="view-toggle">
+          <button class="view-btn ${this.projectView==='table'?'active':''}" onclick="app.setProjectView('table')" title="Table view"><i class="fas fa-list"></i></button>
+          <button class="view-btn ${this.projectView==='cards'?'active':''}" onclick="app.setProjectView('cards')" title="Cards view"><i class="fas fa-th-large"></i></button>
+        </div>
+        <button class="btn btn-primary" onclick="app.openModal('project')">+ Add Project</button>
+      </div>`;
+
+    if(this.projectView === 'cards') {
+      html += `<div class="project-cards-grid">`;
+      if(!projects.length) html += `<div class="empty-state" style="grid-column:1/-1"><div class="es-icon"><i class="fas fa-building"></i></div><p>No projects found</p></div>`;
+      projects.forEach(p => {
+        const c = this.data.clients.find(x => x.id===p.clientId);
+        const pct = p.budget ? Math.min(Math.round(p.spent/p.budget*100),100) : 0;
+        const barColor = pct>90?'var(--danger)':pct>70?'var(--warning)':'var(--success)';
+        const r = 22, circ = 2*Math.PI*r;
+        const dash = circ - (pct/100)*circ;
+        const ringColor = pct>90?'#ef4444':pct>70?'#f59e0b':'#10b981';
+        html += `<div class="project-card" onclick="app.showProjectDetail('${p.id}')">
+          <div class="pc-header">
+            <div>
+              <div class="pc-title">${H(p.name)}</div>
+              <div class="pc-client"><i class="fas fa-user" style="font-size:.7rem"></i> ${c?H(c.name):'No client'}</div>
+            </div>
+            <div class="pc-ring-wrap">
+              <svg width="54" height="54" viewBox="0 0 54 54">
+                <circle cx="27" cy="27" r="${r}" fill="none" stroke="#e5e7eb" stroke-width="5"/>
+                <circle cx="27" cy="27" r="${r}" fill="none" stroke="${ringColor}" stroke-width="5"
+                  stroke-dasharray="${circ.toFixed(1)}" stroke-dashoffset="${dash.toFixed(1)}" stroke-linecap="round"/>
+              </svg>
+              <div class="pc-ring-pct">${pct}%</div>
+            </div>
+          </div>
+          <div class="pc-budget">
+            <div class="pc-budget-label"><span>Budget spent</span><span>${this.fmt(p.spent)} / ${this.fmt(p.budget)}</span></div>
+            <div class="progress-bar"><div class="progress-fill ${pct>90?'danger':pct>70?'warn':''}" style="width:${pct}%"></div></div>
+          </div>
+          <div class="pc-footer">
+            ${this.statusBadge(p.status)}
+            <div class="pc-deadline" onclick="event.stopPropagation()">
+              <i class="fas fa-calendar-alt"></i> ${p.deadline||'No deadline'}
+              <button class="action-btn action-btn-edit" style="margin-left:.4rem" onclick="app.openEditProject('${p.id}')"><i class="fas fa-edit"></i></button>
+              <button class="action-btn action-btn-delete" onclick="app.deleteItem('projects','${p.id}')"><i class="fas fa-trash"></i></button>
+            </div>
+          </div>
+        </div>`;
+      });
+      html += `</div>`;
+    } else {
+      html += `<div class="card"><div class="card-body">
+        <table class="data-table"><thead><tr>
+          <th>Project</th><th>Client</th><th>Status</th><th>Budget</th><th>Spent</th><th>Progress</th><th>Deadline</th><th></th>
+        </tr></thead><tbody>`;
+      if(!projects.length) html += `<tr><td colspan="8" style="text-align:center;padding:2rem;color:var(--text-light)">No projects found</td></tr>`;
+      projects.forEach(p => {
+        const c = this.data.clients.find(x => x.id===p.clientId);
+        const pct = p.budget ? Math.round(p.spent/p.budget*100) : 0;
+        const barClass = pct>90?'danger':pct>70?'warn':'';
+        html += `<tr onclick="app.showProjectDetail('${p.id}')">
+          <td><strong>${H(p.name)}</strong><br><small style="color:var(--text-light)">${H(p.description||'')}</small></td>
+          <td>${c?H(c.name):'-'}</td>
+          <td>${this.statusBadge(p.status)}</td>
+          <td>${this.fmt(p.budget)}</td>
+          <td>${this.fmt(p.spent)}</td>
+          <td style="min-width:100px">
+            <span style="font-size:.78rem;font-weight:600">${pct}%</span>
+            <div class="progress-bar"><div class="progress-fill ${barClass}" style="width:${Math.min(pct,100)}%"></div></div>
+          </td>
+          <td>${p.deadline||'-'}</td>
+          <td onclick="event.stopPropagation()">
+            <button class="action-btn action-btn-edit" onclick="app.openEditProject('${p.id}')"><i class="fas fa-edit"></i></button>
+            <button class="action-btn action-btn-delete" onclick="app.deleteItem('projects','${p.id}')"><i class="fas fa-trash"></i></button>
+          </td>
+        </tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+    }
+    document.getElementById('projects').innerHTML = html;
+  },
+
+  setProjectView(v) {
+    this.projectView = v;
+    this.savePrefs();
+    this.renderProjects();
+  },
+
+  renderTasks() {
+    const H = s => this.escapeHtml(s);
+    const search = (document.getElementById('searchTasks')?.value||'').toLowerCase();
+    let tasks = this.data.tasks.filter(t => !search || t.name.toLowerCase().includes(search));
+    const today = new Date().toISOString().split('T')[0];
+    let html = `
+      <div class="search-bar">
+        <input class="search-input" id="searchTasks" placeholder="Search tasks..." oninput="app.renderTasks()" value="${H(document.getElementById('searchTasks')?.value||'')}">
+        <button class="btn btn-primary" onclick="app.openModal('task')">+ Add Task</button>
+      </div>
+      <div class="card"><div class="card-body">
+      <table class="data-table"><thead><tr><th>Task</th><th>Project</th><th>Assigned To</th><th>Due Date</th><th>Status</th><th></th></tr></thead><tbody>`;
+    if(!tasks.length) html += `<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-light)">No tasks found</td></tr>`;
+    tasks.forEach(t => {
+      const p = this.data.projects.find(x => x.id===t.projectId);
+      const m = t.assignedTo ? this.data.team.find(x => x.id===t.assignedTo) : null;
+      const isOverdue = !t.completed && t.dueDate && t.dueDate < today;
+      html += `<tr>
+        <td><input type="checkbox" ${t.completed?'checked':''} onchange="app.toggleTask('${t.id}')"> ${H(t.name)}${isOverdue?'<span class="badge badge-danger" style="margin-left:.4rem">Overdue</span>':''}</td>
+        <td>${p?H(p.name):'-'}</td>
+        <td>${m?`<span style="display:inline-flex;align-items:center;gap:.4rem"><span style="width:20px;height:20px;border-radius:50%;background:${m.color};display:inline-flex;align-items:center;justify-content:center;color:white;font-size:.6rem;font-weight:bold">${H(m.name[0])}</span>${H(m.name)}</span>`:'-'}</td>
+        <td style="color:${isOverdue?'var(--danger)':'inherit'}">${t.dueDate||'-'}</td>
+        <td>${this.statusBadge(t.completed?'Completed':'Pending')}</td>
+        <td><button class="action-btn action-btn-delete" onclick="app.deleteItem('tasks','${t.id}')"><i class="fas fa-trash"></i></button></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+    document.getElementById('tasks').innerHTML = html;
+  },
+
+  quoteTotal(q) { return (q.items||[]).reduce((s,i)=>s+(i.qty*i.rate),0); },
+  invoiceTotal(inv) { if(inv.items&&inv.items.length) return inv.items.reduce((s,i)=>s+(i.qty*i.rate),0); return inv.amount||0; },
+
+  renderQuotes() {
+    const H = s => this.escapeHtml(s);
+    const filterStatus = document.getElementById('filterQuoteStatus')?.value || '';
+    const search = (document.getElementById('searchQuotes')?.value||'').toLowerCase();
+    let quotes = this.data.quotes.filter(q => {
+      if(filterStatus && q.status !== filterStatus) return false;
+      const c = this.data.clients.find(x=>x.id===q.clientId);
+      const p = this.data.projects.find(x=>x.id===q.projectId);
+      if(search && ![(c?.name||''),(p?.name||''),q.status].join(' ').toLowerCase().includes(search)) return false;
+      return true;
+    });
+    const totalAll = this.data.quotes.reduce((s,q)=>s+this.quoteTotal(q),0);
+    const totalAccepted = this.data.quotes.filter(q=>q.status==='Accepted').reduce((s,q)=>s+this.quoteTotal(q),0);
+    const totalPending = this.data.quotes.filter(q=>q.status==='Pending').reduce((s,q)=>s+this.quoteTotal(q),0);
+    let html = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem">
+        <div class="ov-card" style="border-top-color:#e65100"><div class="ov-label">Total Quoted</div><div class="ov-value">${this.fmt(totalAll)}</div><div class="ov-sub">${this.data.quotes.length} quote${this.data.quotes.length!==1?'s':''}</div></div>
+        <div class="ov-card" style="border-top-color:#10b981"><div class="ov-label">Accepted</div><div class="ov-value" style="color:var(--success)">${this.fmt(totalAccepted)}</div><div class="ov-sub">${this.data.quotes.filter(q=>q.status==='Accepted').length} accepted</div></div>
+        <div class="ov-card" style="border-top-color:#f59e0b"><div class="ov-label">Pending</div><div class="ov-value" style="color:var(--warning)">${this.fmt(totalPending)}</div><div class="ov-sub">${this.data.quotes.filter(q=>q.status==='Pending').length} pending</div></div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" id="searchQuotes" placeholder="Search quotes..." oninput="app.renderQuotes()" value="${H(document.getElementById('searchQuotes')?.value||'')}">
+        <select class="search-select" id="filterQuoteStatus" onchange="app.renderQuotes()">
+          <option value="">All Statuses</option>
+          <option value="Pending"${filterStatus==='Pending'?' selected':''}>Pending</option>
+          <option value="Accepted"${filterStatus==='Accepted'?' selected':''}>Accepted</option>
+          <option value="Rejected"${filterStatus==='Rejected'?' selected':''}>Rejected</option>
+        </select>
+        <button class="btn btn-primary" onclick="app.openModal('quote')">+ New Quote</button>
+      </div>
+      <div class="card"><div class="card-body">
+        <table class="data-table"><thead><tr><th>#</th><th>Client</th><th>Project</th><th>Items</th><th>Amount</th><th>Date</th><th>Status</th><th></th></tr></thead><tbody>`;
+    if(!quotes.length) html += `<tr><td colspan="8"><div class="empty-state"><div class="es-icon"><i class="fas fa-file-invoice"></i></div><p>No quotes found</p></div></td></tr>`;
+    quotes.forEach(q => {
+      const c = this.data.clients.find(x=>x.id===q.clientId);
+      const p = this.data.projects.find(x=>x.id===q.projectId);
+      const amt = this.quoteTotal(q);
+      html += `<tr>
+        <td><strong>QT-${String(q.id).padStart(4,'0')}</strong></td>
+        <td>${c?H(c.name):'-'}</td><td>${p?H(p.name):'-'}</td>
+        <td style="color:var(--text-light);font-size:.8rem">${(q.items||[]).length} line item${(q.items||[]).length!==1?'s':''}</td>
+        <td><strong>${this.fmt(amt)}</strong></td><td>${q.date}</td>
+        <td>${this.statusBadge(q.status)}</td>
+        <td>
+          <button class="action-btn action-btn-edit" onclick="app.viewDoc('quote','${q.id}'" title="View"><i class="fas fa-eye"></i></button>
+          <button class="action-btn action-btn-edit" onclick="app.openEditQuote('${q.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+          ${q.status==='Accepted'?`<button class="action-btn" onclick="app.convertToInvoice('${q.id}')" title="Convert to Invoice" style="background:#d1fae5;color:#065f46"><i class="fas fa-file-invoice-dollar"></i></button>`:''}
+          <button class="action-btn action-btn-email" onclick="app.emailDoc('quote','${q.id}'" title="Send Email"><i class="fas fa-envelope"></i></button>
+          <button class="action-btn action-btn-delete" onclick="app.deleteItem('quotes','${q.id}')"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+    document.getElementById('quotes').innerHTML = html;
+  },
+
+  renderInvoices() {
+    const H = s => this.escapeHtml(s);
+    const today = new Date().toISOString().split('T')[0];
+    this.data.invoices.forEach(i => { if(i.status==='Pending'&&i.dueDate&&i.dueDate<today) i.status='Overdue'; });
+    const filterStatus = document.getElementById('filterInvStatus')?.value || '';
+    const search = (document.getElementById('searchInvoices')?.value||'').toLowerCase();
+    let invoices = this.data.invoices.filter(i => {
+      if(filterStatus && i.status !== filterStatus) return false;
+      const c = this.data.clients.find(x=>x.id===i.clientId);
+      const p = this.data.projects.find(x=>x.id===i.projectId);
+      if(search && ![(c?.name||''),(p?.name||'')].join(' ').toLowerCase().includes(search)) return false;
+      return true;
+    });
+    const totalPaid = this.data.invoices.filter(i=>i.status==='Paid').reduce((s,i)=>s+this.invoiceTotal(i),0);
+    const totalOutstanding = this.data.invoices.filter(i=>i.status!=='Paid').reduce((s,i)=>s+this.invoiceTotal(i),0);
+    const totalOverdue = this.data.invoices.filter(i=>i.status==='Overdue').reduce((s,i)=>s+this.invoiceTotal(i),0);
+    let html = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.5rem">
+        <div class="ov-card" style="border-top-color:#10b981"><div class="ov-label">Total Paid</div><div class="ov-value" style="color:var(--success)">${this.fmt(totalPaid)}</div><div class="ov-sub">${this.data.invoices.filter(i=>i.status==='Paid').length} invoices</div></div>
+        <div class="ov-card" style="border-top-color:#f59e0b"><div class="ov-label">Outstanding</div><div class="ov-value" style="color:var(--warning)">${this.fmt(totalOutstanding)}</div><div class="ov-sub">${this.data.invoices.filter(i=>i.status!=='Paid').length} unpaid</div></div>
+        <div class="ov-card" style="border-top-color:#ef4444"><div class="ov-label">Overdue</div><div class="ov-value" style="color:var(--danger)">${this.fmt(totalOverdue)}</div><div class="ov-sub">${this.data.invoices.filter(i=>i.status==='Overdue').length} overdue</div></div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" id="searchInvoices" placeholder="Search invoices..." oninput="app.renderInvoices()" value="${H(document.getElementById('searchInvoices')?.value||'')}">
+        <select class="search-select" id="filterInvStatus" onchange="app.renderInvoices()">
+          <option value="">All Statuses</option>
+          <option value="Pending"${filterStatus==='Pending'?' selected':''}>Pending</option>
+          <option value="Paid"${filterStatus==='Paid'?' selected':''}>Paid</option>
+          <option value="Overdue"${filterStatus==='Overdue'?' selected':''}>Overdue</option>
+        </select>
+        <button class="btn btn-primary" onclick="app.openModal('invoice')">+ New Invoice</button>
+      </div>
+      <div class="card"><div class="card-body">
+        <table class="data-table"><thead><tr><th>#</th><th>Client</th><th>Project</th><th>Amount</th><th>Issued</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>`;
+    if(!invoices.length) html += `<tr><td colspan="8"><div class="empty-state"><div class="es-icon"><i class="fas fa-file-invoice-dollar"></i></div><p>No invoices found</p></div></td></tr>`;
+    invoices.forEach(i => {
+      const c = this.data.clients.find(x=>x.id===i.clientId);
+      const p = this.data.projects.find(x=>x.id===i.projectId);
+      const amt = this.invoiceTotal(i);
+      html += `<tr>
+        <td><strong>INV-${String(i.id).padStart(4,'0')}</strong></td>
+        <td>${c?H(c.name):'-'}</td><td>${p?H(p.name):'-'}</td>
+        <td><strong>${this.fmt(amt)}</strong></td><td>${i.date}</td>
+        <td style="color:${i.status==='Overdue'?'var(--danger)':'inherit'}">${i.dueDate||'-'}</td>
+        <td>${this.statusBadge(i.status)}</td>
+        <td>
+          <button class="action-btn action-btn-edit" onclick="app.viewDoc('invoice','${i.id}'" title="View"><i class="fas fa-eye"></i></button>
+          <button class="action-btn action-btn-edit" onclick="app.openEditInvoice('${i.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+          ${i.status!=='Paid'?`<button class="action-btn" onclick="app.markPaid('${i.id}')" title="Mark as Paid" style="background:#d1fae5;color:#065f46"><i class="fas fa-check"></i></button>`:''}
+          <button class="action-btn action-btn-email" onclick="app.emailDoc('invoice','${i.id}'" title="Send Email"><i class="fas fa-envelope"></i></button>
+          <button class="action-btn action-btn-delete" onclick="app.deleteItem('invoices','${i.id}')"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+    document.getElementById('invoices').innerHTML = html;
+  },
+
+  getCats() { return this.data.expenseCategories || []; },
+  getCatNames() { return this.getCats().map(c=>c.name); },
+  getCatColor(name) { const c = this.getCats().find(x=>x.name===name); return c ? c.color : '#6b7280'; },
+
+  renderBudget() {
+    const H = s => this.escapeHtml(s);
+    if(!this.data.expenses) this.data.expenses = [];
+    const filterProject = document.getElementById('budgetProjectFilter')?.value || '';
+    const filterType = document.getElementById('budgetTypeFilter')?.value || '';
+    let expenses = this.data.expenses.slice();
+    if(filterProject) expenses = expenses.filter(e => String(e.projectId) === filterProject);
+    if(filterType) expenses = expenses.filter(e => e.type === filterType);
+
+    const totalPlanned = expenses.reduce((s,e) => s + (e.planned||0), 0);
+    const totalActual = expenses.reduce((s,e) => s + (e.actual||0), 0);
+    const variance = totalPlanned - totalActual;
+    const overCount = expenses.filter(e => (e.actual||0) > (e.planned||0) && (e.actual||0) > 0).length;
+
+    let html = `
+      <div class="search-bar">
+        <select class="search-select" id="budgetProjectFilter" onchange="app.renderBudget()">
+          <option value="">All Projects</option>
+          ${this.data.projects.map(p=>`<option value="${p.id}"${filterProject===String(p.id)?' selected':''}>${H(p.name)}</option>`).join('')}
+        </select>
+        <select class="search-select" id="budgetTypeFilter" onchange="app.renderBudget()">
+          <option value="">All Categories</option>
+          ${this.getCatNames().map(t=>`<option value="${H(t)}"${filterType===t?' selected':''}>${H(t)}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary" onclick="app.openModal('expense')">+ Add Expense</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">
+        <div class="ov-card" style="border-top-color:#1565c0"><div class="ov-label">Total Planned</div><div class="ov-value">${this.fmt(totalPlanned)}</div><div class="ov-sub">${expenses.length} item${expenses.length!==1?'s':''}</div></div>
+        <div class="ov-card" style="border-top-color:#f59e0b"><div class="ov-label">Total Actual</div><div class="ov-value">${this.fmt(totalActual)}</div><div class="ov-sub">${expenses.filter(e=>(e.actual||0)>0).length} recorded</div></div>
+        <div class="ov-card" style="border-top-color:${variance>=0?'#10b981':'#ef4444'}"><div class="ov-label">Variance</div><div class="ov-value" style="color:${variance>=0?'var(--success)':'var(--danger)'}">${variance>=0?'+':''}${this.fmt(variance)}</div><div class="ov-sub">${variance>=0?'Under budget':'Over budget'}</div></div>
+        <div class="ov-card" style="border-top-color:${overCount?'#ef4444':'#10b981'}"><div class="ov-label">Over Budget Items</div><div class="ov-value" style="color:${overCount?'var(--danger)':'var(--success)'}">${overCount}</div><div class="ov-sub">of ${expenses.length} item${expenses.length!==1?'s':''}</div></div>
+      </div>
+      <div class="card"><div class="card-header"><h3><i class="fas fa-list-alt"></i> Expense Register</h3></div><div class="card-body">
+        <table class="data-table"><thead><tr><th>Description</th><th>Category</th><th>Project</th><th>Date</th><th>Planned</th><th>Actual</th><th>Variance</th><th></th></tr></thead><tbody>`;
+
+    if(!expenses.length) html += `<tr><td colspan="8"><div class="empty-state"><div class="es-icon"><i class="fas fa-book-open"></i></div><p>No expenses yet. Add your first budget item.</p></div></td></tr>`;
+
+    expenses.forEach(e => {
+      const p = this.data.projects.find(x=>x.id===e.projectId);
+      const actual = e.actual||0;
+      const varAmt = (e.planned||0) - actual;
+      const hasActual = actual > 0;
+      const color = this.getCatColor(e.type);
+      const overBudget = hasActual && actual > (e.planned||0);
+      html += `<tr>
+        <td><strong>${H(e.description)}</strong>${e.notes?`<br><small style="color:var(--text-light)">${H(e.notes)}</small>`:''}${!hasActual?'<span class="badge badge-gray" style="margin-left:.4rem">Pending</span>':''}</td>
+        <td><span class="badge" style="background:${color}20;color:${color}">${H(e.type)}</span></td>
+        <td>${p?H(p.name):'-'}</td>
+        <td>${e.date||'-'}</td>
+        <td>${this.fmt(e.planned||0)}</td>
+        <td>${hasActual?`<span style="color:${overBudget?'var(--danger)':'inherit'}">${this.fmt(actual)}</span>`:'<span style="color:var(--text-light)">—</span>'}</td>
+        <td style="font-weight:600;color:${hasActual?(varAmt<0?'var(--danger)':'var(--success)'):'var(--text-light)'}">${hasActual?(varAmt>=0?'+':'')+this.fmt(varAmt):'—'}</td>
+        <td>
+          <button class="action-btn action-btn-edit" onclick="app.openEditExpense('${e.id}')"><i class="fas fa-edit"></i></button>
+          <button class="action-btn action-btn-delete" onclick="app.deleteItem('expenses','${e.id}')"><i class="fas fa-trash"></i></button>
+        </td>
+      </tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+
+    if(expenses.length) {
+      html += `<div class="card"><div class="card-header"><h3><i class="fas fa-chart-bar"></i> By Category</h3></div><div class="card-body">
+        <table class="data-table"><thead><tr><th>Category</th><th>Items</th><th>Planned</th><th>Actual</th><th>Variance</th><th>% of Budget</th></tr></thead><tbody>`;
+      this.getCats().forEach(cat => { const t = cat.name;
+        const tItems = expenses.filter(e=>e.type===t);
+        if(!tItems.length) return;
+        const tPlanned = tItems.reduce((s,e)=>s+(e.planned||0),0);
+        const tActual = tItems.reduce((s,e)=>s+(e.actual||0),0);
+        const tVar = tPlanned - tActual;
+        const pct = totalPlanned ? Math.round(tPlanned/totalPlanned*100) : 0;
+        const color = cat.color;
+        html += `<tr>
+          <td><span class="badge" style="background:${color}20;color:${color}">${H(t)}</span></td>
+          <td>${tItems.length}</td>
+          <td>${this.fmt(tPlanned)}</td>
+          <td>${tActual>0?this.fmt(tActual):'—'}</td>
+          <td style="font-weight:600;color:${tActual>0?(tVar<0?'var(--danger)':'var(--success)'):'var(--text-light)'}">${tActual>0?(tVar>=0?'+':'')+this.fmt(tVar):'—'}</td>
+          <td><div style="display:flex;align-items:center;gap:.5rem"><span style="font-size:.78rem;min-width:28px">${pct}%</span><div style="flex:1;min-width:80px;background:#e5e7eb;border-radius:3px;height:6px"><div style="width:${pct}%;background:${color};height:6px;border-radius:3px"></div></div></div></td>
+        </tr>`;
+      });
+      html += `</tbody></table></div></div>`;
+    }
+
+    // ── Inline Categories Manager ─────────────────────────────────
+    const inUse = new Set((this.data.expenses||[]).map(e=>e.type));
+    html += `<div class="card">
+      <div class="card-header"><h3><i class="fas fa-tags"></i> Expense Categories</h3><span style="font-size:.8rem;color:var(--text-light)">Available across all projects</span></div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem" id="catChips">
+          ${this.getCats().map(c=>`
+            <div style="display:inline-flex;align-items:center;gap:.45rem;background:#f9fafb;border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.82rem">
+              <span style="width:10px;height:10px;border-radius:2px;background:${c.color};flex-shrink:0"></span>
+              <span style="font-weight:500">${H(c.name)}</span>
+              ${c.isDefault?'<span style="font-size:.65rem;color:var(--text-light);margin-left:.15rem">(default)</span>':''}
+              ${inUse.has(c.name)?'<span style="font-size:.65rem;color:#1565c0;margin-left:.1rem">●</span>':''}
+              <button onclick="app.deleteCategory('${c.name.replace(/'/g,"\\'")}')" title="Delete category" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:.9rem;line-height:1;padding:0 .1rem;margin-left:.1rem" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#9ca3af'">✕</button>
+            </div>`).join('')}
+          ${this.getCats().length===0?'<p style="color:var(--text-light);font-size:.85rem">No categories yet.</p>':''}
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:.9rem">
+          <label style="font-weight:600;font-size:.83rem;display:block;margin-bottom:.5rem"><i class="fas fa-plus-circle" style="color:var(--primary)"></i> Add New Category</label>
+          <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+            <input id="budgetCatName" class="search-input" style="flex:1;min-width:180px" placeholder="Category name (e.g. Consultants, Safety)">
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <label style="font-size:.8rem;color:var(--text-light);font-weight:normal">Colour:</label>
+              <input type="color" id="budgetCatColor" value="#3b82f6" style="width:42px;height:34px;padding:2px 3px;border-radius:6px;border:1px solid var(--border);cursor:pointer">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="app.addCategory()"><i class="fas fa-plus"></i> Add Category</button>
+          </div>
+          <p id="catError" style="color:var(--danger);font-size:.8rem;margin-top:.4rem;display:none"></p>
+          <p style="font-size:.75rem;color:var(--text-light);margin-top:.5rem"><i class="fas fa-info-circle"></i> Blue dot = category currently in use. Default categories can be deleted — existing expenses are not affected.</p>
+        </div>
+      </div>
+    </div>`;
+
+    document.getElementById('budget').innerHTML = html;
+  },
+
+  renderClients() {
+    const H = s => this.escapeHtml(s);
+    let html = `<div class="card"><div class="card-header"><h3><i class="fas fa-users"></i> Clients</h3><button class="btn btn-primary" onclick="app.openModal('client')">+ Add Client</button></div><div class="card-body">
+      <table class="data-table"><thead><tr><th>Name</th><th>Company</th><th>Email</th><th>Phone</th><th>Projects</th><th></th></tr></thead><tbody>`;
+    if(!this.data.clients.length) html += `<tr><td colspan="6"><div class="empty-state"><div class="es-icon"><i class="fas fa-users"></i></div><p>No clients yet</p></div></td></tr>`;
+    this.data.clients.forEach(c => {
+      const projCount = this.data.projects.filter(p=>p.clientId===c.id).length;
+      html += `<tr>
+        <td><strong>${H(c.name)}</strong></td><td>${H(c.company)}</td>
+        <td><a href="mailto:${H(c.email)}" style="color:var(--secondary)">${H(c.email)}</a></td>
+        <td>${H(c.phone)}</td>
+        <td><span class="badge badge-info">${projCount} project${projCount!==1?'s':''}</span></td>
+        <td><button class="action-btn action-btn-delete" onclick="app.deleteItem('clients','${c.id}')"><i class="fas fa-trash"></i></button></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+    document.getElementById('clients').innerHTML = html;
+  },
+
+  renderLogs() {
+    const H = s => this.escapeHtml(s);
+    let html = `<div class="card"><div class="card-header"><h3><i class="fas fa-clipboard-list"></i> Daily Logs</h3><button class="btn btn-primary" onclick="app.openModal('log')">+ Add Log</button></div><div class="card-body">
+      <table class="data-table"><thead><tr><th>Date</th><th>Project</th><th>Weather</th><th>Crew</th><th>Notes</th><th></th></tr></thead><tbody>`;
+    const wIcons = {Sunny:'☀️',Cloudy:'☁️',Rainy:'🌧️',Windy:'💨',Stormy:'⛈️'};
+    if(!this.data.logs.length) html += `<tr><td colspan="6"><div class="empty-state"><div class="es-icon"><i class="fas fa-clipboard-list"></i></div><p>No logs yet</p></div></td></tr>`;
+    [...this.data.logs].sort((a,b)=>b.date.localeCompare(a.date)).forEach(l => {
+      const p = this.data.projects.find(x=>x.id===l.projectId);
+      html += `<tr>
+        <td>${l.date}</td><td>${p?H(p.name):'General'}</td>
+        <td>${wIcons[l.weather]||''} ${H(l.weather)}</td>
+        <td>${l.crew||'-'}</td>
+        <td style="max-width:300px">${H(l.notes)}</td>
+        <td><button class="action-btn action-btn-delete" onclick="app.deleteItem('logs','${l.id}')"><i class="fas fa-trash"></i></button></td>
+      </tr>`;
+    });
+    html += `</tbody></table></div></div>`;
+    document.getElementById('logs').innerHTML = html;
+  },
+
+  docIcon(type) {
+    const map = {pdf:'fa-file-pdf',docx:'fa-file-word',doc:'fa-file-word',xlsx:'fa-file-excel',xls:'fa-file-excel',jpg:'fa-file-image',png:'fa-file-image',zip:'fa-file-archive'};
+    const colors = {pdf:'#ef4444',docx:'#1565c0',doc:'#1565c0',xlsx:'#2e7d32',xls:'#2e7d32',jpg:'#f59e0b',png:'#f59e0b',zip:'#6b7280'};
+    return {icon:map[type]||'fa-file',color:colors[type]||'#6b7280'};
+  },
+
+  renderDocuments() {
+    const H = s => this.escapeHtml(s);
+    const projectFilter = document.getElementById('docProjectFilter')?.value || '';
+    let docs = projectFilter ? this.data.documents.filter(d=>String(d.projectId)===projectFilter) : this.data.documents;
+    let html = `
+      <div class="search-bar">
+        <select class="search-select" id="docProjectFilter" onchange="app.renderDocuments()">
+          <option value="">All Projects</option>
+          ${this.data.projects.map(p=>`<option value="${p.id}"${projectFilter===String(p.id)?' selected':''}>${H(p.name)}</option>`).join('')}
+        </select>
+        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()"><i class="fas fa-upload"></i> Upload File</button>
+      </div>
+      <div class="card"><div class="card-body"><div class="doc-list">`;
+    if(!docs.length) html += `<div class="empty-state"><div class="es-icon"><i class="fas fa-folder-open"></i></div><p>No documents yet. Upload files to get started.</p></div>`;
+    docs.forEach(d => {
+      const {icon,color} = this.docIcon(d.type);
+      const p = this.data.projects.find(x=>x.id===d.projectId);
+      html += `<div class="doc-item">
+        <div class="doc-icon" style="background:${color}20;color:${color}"><i class="fas ${icon}"></i></div>
+        <div class="doc-info">
+          <div class="doc-name">${H(d.name)}</div>
+          <div class="doc-meta">${p?H(p.name):'No project'} &bull; ${d.size} &bull; ${d.date} &bull; ${H(d.uploadedBy)}</div>
+        </div>
+        <button class="action-btn action-btn-delete" onclick="app.deleteItem('documents','${d.id}')"><i class="fas fa-trash"></i></button>
+      </div>`;
+    });
+    html += `</div></div></div>`;
+    document.getElementById('documents').innerHTML = html;
+  },
+
+  renderTeam() {
+    const H = s => this.escapeHtml(s);
+    let html = `<div style="display:flex;justify-content:flex-end;margin-bottom:1rem"><button class="btn btn-primary" onclick="app.openModal('team')">+ Add Member</button></div><div class="team-grid">`;
+    if(!this.data.team.length) html += `<div class="empty-state" style="grid-column:1/-1"><div class="es-icon"><i class="fas fa-hard-hat"></i></div><p>No team members yet.</p></div>`;
+    this.data.team.forEach(m => {
+      const assigned = this.data.tasks.filter(t=>t.assignedTo===m.id).length;
+      const done = this.data.tasks.filter(t=>t.assignedTo===m.id&&t.completed).length;
+      const initials = m.name.split(' ').map(w=>w[0]).join('').toUpperCase();
+      html += `<div class="team-card">
+        <div class="team-avatar" style="background:${m.color}">${initials}</div>
+        <div class="team-name">${H(m.name)}</div>
+        <div class="team-role">${H(m.role)}</div>
+        <div style="font-size:.78rem;color:var(--text-light);margin-top:.3rem">${H(m.email)}</div>
+        <div style="font-size:.78rem;color:var(--text-light)">${H(m.phone)}</div>
+        <div style="margin-top:.6rem;font-size:.78rem;color:var(--primary)">${done}/${assigned} tasks done</div>
+        ${assigned?`<div class="progress-bar" style="margin-top:.3rem"><div class="progress-fill" style="width:${assigned?Math.round(done/assigned*100):0}%"></div></div>`:''}
+        <button class="action-btn action-btn-delete" style="margin-top:.75rem" onclick="app.deleteItem('team','${m.id}')"><i class="fas fa-trash"></i> Remove</button>
+      </div>`;
+    });
+    html += `</div>`;
+    document.getElementById('team').innerHTML = html;
+  },
+
+  showProjectDetail(pid) {
+    const H = s => this.escapeHtml(s);
+    this.currentProjectId = pid;
+    const p = this.data.projects.find(x=>x.id===pid);
+    if(!p) return;
+    const c = this.data.clients.find(x=>x.id===p.clientId);
+    const tasks = this.data.tasks.filter(t=>t.projectId===pid);
+    const milestones = this.data.milestones.filter(m=>m.projectId===pid);
+    const quotes = this.data.quotes.filter(q=>q.projectId===pid);
+    const invoices = this.data.invoices.filter(i=>i.projectId===pid);
+    const logs = this.data.logs.filter(l=>l.projectId===pid);
+
+    document.getElementById('detailProjectName').textContent = p.name;
+    document.getElementById('detailMeta').innerHTML = `
+      <span><i class="fas fa-user"></i> ${c?H(c.name):'No client'}</span>
+      <span>${this.statusBadge(p.status)}</span>
+      <span><i class="fas fa-calendar"></i> ${p.startDate||'?'} → ${p.deadline||'TBD'}</span>
+      ${p.description?`<span style="color:var(--text)">${H(p.description)}</span>`:''}
+    `;
+
+    const pct = p.budget ? Math.min(Math.round(p.spent/p.budget*100),100) : 0;
+    document.getElementById('detailBudgetBar').innerHTML = `
+      <div style="display:flex;justify-content:space-between;font-size:.8rem;color:var(--text-light);margin-bottom:.3rem">
+        <span>Budget used: ${pct}%</span><span>${this.fmt(p.spent)} of ${this.fmt(p.budget)}</span>
+      </div>
+      <div class="progress-bar" style="height:10px"><div class="progress-fill ${pct>90?'danger':pct>70?'warn':''}" style="width:${pct}%"></div></div>
+    `;
+
+    const taskDone = tasks.filter(t=>t.completed).length;
+    const msDone = milestones.filter(m=>m.completed).length;
+    document.getElementById('detailMetrics').innerHTML = `
+      <div class="metric-card"><h4>Budget</h4><div class="value">${this.fmt(p.budget)}</div></div>
+      <div class="metric-card"><h4>Spent</h4><div class="value" style="color:${p.spent>p.budget?'var(--danger)':'inherit'}">${this.fmt(p.spent)}</div></div>
+      <div class="metric-card"><h4>Remaining</h4><div class="value" style="color:${p.budget-p.spent<0?'var(--danger)':'var(--success)'}">${this.fmt(p.budget-p.spent)}</div></div>
+      <div class="metric-card"><h4>Tasks</h4><div class="value">${taskDone}/${tasks.length}</div></div>
+      <div class="metric-card"><h4>Milestones</h4><div class="value">${msDone}/${milestones.length}</div></div>
+      <div class="metric-card"><h4>Invoices</h4><div class="value">${invoices.length}</div></div>
+    `;
+
+    document.getElementById('detailTasks').innerHTML = tasks.length
+      ? `<table class="data-table"><thead><tr><th>Task</th><th>Due</th><th>Status</th></tr></thead><tbody>`+
+        tasks.map(t=>`<tr><td><input type="checkbox" ${t.completed?'checked':''} onchange="app.toggleTask('${t.id}')"> ${H(t.name)}</td><td>${t.dueDate||'-'}</td><td>${this.statusBadge(t.completed?'Completed':'Pending')}</td></tr>`).join('')+
+        `</tbody></table>`
+      : `<div class="empty-state"><div class="es-icon"><i class="fas fa-tasks"></i></div><p>No tasks yet</p></div>`;
+
+    document.getElementById('detailMilestones').innerHTML = milestones.length
+      ? `<div class="timeline">`+milestones.map(m=>`<div class="timeline-item ${m.completed?'completed':''}"><div class="timeline-date">${m.date}</div><div class="timeline-title">${H(m.name)} ${m.completed?'<span class="badge badge-success">Done</span>':''}</div></div>`).join('')+`</div>`
+      : `<div class="empty-state"><div class="es-icon"><i class="fas fa-flag"></i></div><p>No milestones yet</p></div>`;
+
+    this.renderGantt(p, milestones, tasks);
+
+    document.getElementById('detailQuotes').innerHTML = quotes.length
+      ? `<table class="data-table"><thead><tr><th>#</th><th>Amount</th><th>Status</th></tr></thead><tbody>`+
+        quotes.map(q=>`<tr><td>QT-${String(q.id).padStart(4,'0')}</td><td>${this.fmt(this.quoteTotal(q))}</td><td>${this.statusBadge(q.status)}</td></tr>`).join('')+`</tbody></table>`
+      : `<div class="empty-state"><div class="es-icon"><i class="fas fa-file-invoice"></i></div><p>No quotes</p></div>`;
+
+    document.getElementById('detailInvoices').innerHTML = invoices.length
+      ? `<table class="data-table"><thead><tr><th>#</th><th>Amount</th><th>Due</th><th>Status</th></tr></thead><tbody>`+
+        invoices.map(i=>`<tr><td>INV-${String(i.id).padStart(4,'0')}</td><td>${this.fmt(i.amount)}</td><td>${i.dueDate||'-'}</td><td>${this.statusBadge(i.status)}</td></tr>`).join('')+`</tbody></table>`
+      : `<div class="empty-state"><div class="es-icon"><i class="fas fa-file-invoice-dollar"></i></div><p>No invoices</p></div>`;
+
+    document.getElementById('detailLogs').innerHTML = logs.length
+      ? `<table class="data-table"><thead><tr><th>Date</th><th>Weather</th><th>Crew</th><th>Notes</th></tr></thead><tbody>`+
+        logs.map(l=>`<tr><td>${l.date}</td><td>${H(l.weather)}</td><td>${l.crew||'-'}</td><td>${H(l.notes)}</td></tr>`).join('')+`</tbody></table>`
+      : `<div class="empty-state"><div class="es-icon"><i class="fas fa-clipboard-list"></i></div><p>No logs yet</p></div>`;
+
+    const teamOnTasks = [...new Set(tasks.filter(t=>t.assignedTo).map(t=>t.assignedTo))];
+    const teamMembers = teamOnTasks.map(id=>this.data.team.find(m=>m.id===id)).filter(Boolean);
+    document.getElementById('detailTeam').innerHTML = teamMembers.length
+      ? `<div style="display:flex;flex-wrap:wrap;gap:.75rem;padding:.5rem">`+teamMembers.map(m=>{const initials=m.name.split(' ').map(w=>w[0]).join('');return `<div style="display:flex;align-items:center;gap:.5rem;background:#f9fafb;padding:.5rem .75rem;border-radius:8px;border:1px solid var(--border)"><div style="width:32px;height:32px;border-radius:50%;background:${m.color};display:flex;align-items:center;justify-content:center;color:white;font-size:.8rem;font-weight:bold">${H(initials)}</div><div><div style="font-weight:600;font-size:.85rem">${H(m.name)}</div><div style="font-size:.75rem;color:var(--text-light)">${H(m.role)}</div></div></div>`;}).join('')+`</div>`
+      : `<div class="empty-state"><div class="es-icon"><i class="fas fa-users"></i></div><p>No team assigned</p></div>`;
+
+    const expenses = (this.data.expenses||[]).filter(e=>e.projectId===pid);
+    const expPlanned = expenses.reduce((s,e)=>s+(e.planned||0),0);
+    const expActual = expenses.reduce((s,e)=>s+(e.actual||0),0);
+    const expVar = expPlanned - expActual;
+    if(!expenses.length) {
+      document.getElementById('detailExpenses').innerHTML = `<div class="empty-state"><div class="es-icon"><i class="fas fa-book-open"></i></div><p>No expenses planned yet.</p></div>`;
+    } else {
+      let expHtml = `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1rem">
+        <div style="background:#f0f4ff;border-radius:8px;padding:.75rem;text-align:center"><div style="font-size:.72rem;color:var(--text-light);text-transform:uppercase;margin-bottom:.25rem">Planned</div><div style="font-weight:700;font-size:1.1rem">${this.fmt(expPlanned)}</div></div>
+        <div style="background:#f0fdf4;border-radius:8px;padding:.75rem;text-align:center"><div style="font-size:.72rem;color:var(--text-light);text-transform:uppercase;margin-bottom:.25rem">Actual</div><div style="font-weight:700;font-size:1.1rem">${this.fmt(expActual)}</div></div>
+        <div style="background:${expVar<0?'#fef2f2':'#f0fdf4'};border-radius:8px;padding:.75rem;text-align:center"><div style="font-size:.72rem;color:var(--text-light);text-transform:uppercase;margin-bottom:.25rem">Variance</div><div style="font-weight:700;font-size:1.1rem;color:${expVar<0?'var(--danger)':'var(--success)'}">${expVar>=0?'+':''}${this.fmt(expVar)}</div></div>
+      </div>
+      <table class="data-table"><thead><tr><th>Description</th><th>Category</th><th>Planned</th><th>Actual</th><th>Variance</th><th></th></tr></thead><tbody>`;
+      expenses.forEach(e => {
+        const actual = e.actual||0;
+        const varAmt = (e.planned||0) - actual;
+        const hasActual = actual > 0;
+        const color = this.getCatColor(e.type);
+        expHtml += `<tr>
+          <td><strong>${H(e.description)}</strong>${e.notes?`<br><small style="color:var(--text-light)">${H(e.notes)}</small>`:''}${!hasActual?'<span class="badge badge-gray" style="margin-left:.4rem">Pending</span>':''}</td>
+          <td><span class="badge" style="background:${color}20;color:${color}">${H(e.type)}</span></td>
+          <td>${this.fmt(e.planned||0)}</td>
+          <td>${hasActual?`<span style="color:${actual>(e.planned||0)?'var(--danger)':'inherit'}">${this.fmt(actual)}</span>`:'<span style="color:var(--text-light)">—</span>'}</td>
+          <td style="font-weight:600;color:${hasActual?(varAmt<0?'var(--danger)':'var(--success)'):'var(--text-light)'}">${hasActual?(varAmt>=0?'+':'')+this.fmt(varAmt):'—'}</td>
+          <td><button class="action-btn action-btn-edit" onclick="app.openEditExpense('${e.id}')"><i class="fas fa-edit"></i></button><button class="action-btn action-btn-delete" onclick="app.deleteItem('expenses','${e.id}')"><i class="fas fa-trash"></i></button></td>
+        </tr>`;
+      });
+      expHtml += `</tbody></table>`;
+      document.getElementById('detailExpenses').innerHTML = expHtml;
+    }
+
+    document.getElementById('projectsView').style.display = 'none';
+    document.getElementById('projectDetail').classList.add('active');
+  },
+
+  renderGantt(p, milestones, tasks) {
+    const H = s => this.escapeHtml(s);
+    const el = document.getElementById('detailGantt');
+    if(!p.startDate || !p.deadline) {
+      el.innerHTML = `<p style="color:var(--text-light);padding:1rem">Set start and deadline dates to view Gantt chart.</p>`;
+      return;
+    }
+
+    const start = new Date(p.startDate);
+    const end = new Date(p.deadline);
+    const totalDays = Math.max(Math.ceil((end - start) / 86400000), 1);
+    const today = new Date();
+    const todayPct = Math.min(100, Math.max(0, (today - start) / 86400000 / totalDays * 100));
+
+    // Build month headers
+    const months = [];
+    let cur = new Date(start.getFullYear(), start.getMonth(), 1);
+    while(cur <= end) {
+      const mStart = new Date(Math.max(cur, start));
+      const mEnd = new Date(Math.min(new Date(cur.getFullYear(), cur.getMonth()+1, 0), end));
+      const mDays = Math.ceil((mEnd - mStart) / 86400000) + 1;
+      const leftPct = (mStart - start) / 86400000 / totalDays * 100;
+      const widthPct = mDays / totalDays * 100;
+      months.push({label: cur.toLocaleDateString('en-ZA',{month:'short',year:'2-digit'}), leftPct, widthPct});
+      cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    }
+
+    const getPcts = (s, e) => {
+      const sd = new Date(s || p.startDate);
+      const ed = new Date(e || p.deadline);
+      const left = Math.max(0, (sd - start) / 86400000 / totalDays * 100);
+      const width = Math.min(100 - left, Math.max(1, (ed - sd) / 86400000 / totalDays * 100));
+      return {left, width};
+    };
+
+    // Month header row
+    let monthCells = months.map(m =>
+      `<th style="width:${m.widthPct.toFixed(1)}%;text-align:center;border-right:1px solid var(--border);border-left:1px solid var(--border);background:#eef2ff;color:#3730a3;font-size:.68rem;padding:.35rem .3rem">${m.label}</th>`
+    ).join('');
+
+    let rows = '';
+
+    // Project bar
+    rows += `<tr>
+      <td class="gantt-label-col"><strong>${H(p.name)}</strong></td>
+      <td class="gantt-date-col">${p.startDate}</td>
+      <td class="gantt-date-col">${p.deadline}</td>
+      <td class="gantt-bar-col" style="position:relative">
+        <div class="gantt-track">
+          <div class="gantt-bar" style="left:0%;width:100%;background:var(--primary)">Project Timeline</div>
+          <div class="gantt-today" style="left:${todayPct.toFixed(1)}%"></div>
+        </div>
+      </td>
+    </tr>`;
+
+    // Milestone rows
+    milestones.forEach(m => {
+      const ms = new Date(m.date);
+      const leftPct = Math.min(98, Math.max(0, (ms - start) / 86400000 / totalDays * 100));
+      rows += `<tr>
+        <td class="gantt-label-col" style="padding-left:1.5rem;font-size:.82rem;color:var(--text-light)">${H(m.name)}</td>
+        <td class="gantt-date-col">${m.date}</td>
+        <td class="gantt-date-col"></td>
+        <td class="gantt-bar-col" style="position:relative">
+          <div class="gantt-track">
+            <span class="gantt-milestone ${m.completed?'done':''}" style="left:${leftPct.toFixed(1)}%">◆</span>
+            <div class="gantt-today" style="left:${todayPct.toFixed(1)}%"></div>
+          </div>
+        </td>
+      </tr>`;
+    });
+
+    // Task rows
+    tasks.filter(t => t.dueDate).forEach(t => {
+      const {left, width} = getPcts(p.startDate, t.dueDate);
+      const color = t.completed ? '#10b981' : '#f59e0b';
+      rows += `<tr>
+        <td class="gantt-label-col" style="padding-left:1.5rem;font-size:.82rem">${H(t.name)}</td>
+        <td class="gantt-date-col">${p.startDate}</td>
+        <td class="gantt-date-col">${t.dueDate}</td>
+        <td class="gantt-bar-col" style="position:relative">
+          <div class="gantt-track">
+            <div class="gantt-bar" style="left:${left.toFixed(1)}%;width:${width.toFixed(1)}%;background:${color}">${H(t.name)}</div>
+            <div class="gantt-today" style="left:${todayPct.toFixed(1)}%"></div>
+          </div>
+        </td>
+      </tr>`;
+    });
+
+    el.innerHTML = `<div class="gantt-outer"><table class="gantt-grid">
+      <thead>
+        <tr>
+          <th class="gantt-label-col">Item</th>
+          <th class="gantt-date-col">Start</th>
+          <th class="gantt-date-col">End</th>
+          <th style="padding:0"><div style="position:relative;height:24px">${months.map(m=>`<div class="gantt-month-cell" style="position:absolute;left:${m.leftPct.toFixed(1)}%;width:${m.widthPct.toFixed(1)}%;text-align:center;font-size:.66rem;font-weight:700;height:24px;display:flex;align-items:center;justify-content:center;box-sizing:border-box;border-right:1px solid #c7d2fe">${m.label}</div>`).join('')}</div></th>
+        </tr>
+        <tr>
+          <th colspan="3"></th>
+          <th style="padding:0;height:4px;background:#f9fafb;border-bottom:1px solid var(--border)"></th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+  },
+
+  showProjectsList() {
+    this.currentProjectId = null;
+    document.getElementById('projectDetail').classList.remove('active');
+    document.getElementById('projectsView').style.display = 'block';
+  },
+
+  async toggleTask(id) {
+    const t = this.data.tasks.find(x=>x.id===id);
+    if(!t) return;
+    const updated = await this.dbUpdate('tasks', id, {completed:!t.completed});
+    if(!updated) return;
+    t.completed = !t.completed;
+    this.render();
+    if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+  },
+
+  async toggleMilestone(id) {
+    const m = this.data.milestones.find(x=>x.id===id);
+    if(!m) return;
+    const updated = await this.dbUpdate('milestones', id, {completed:!m.completed});
+    if(!updated) return;
+    m.completed = !m.completed;
+    this.render();
+    if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+  },
+
+  async deleteItem(type, id) {
+    if(!confirm('Delete this item?')) return;
+    // Map frontend data key to Supabase table name
+    const tableMap = {
+      projects:'projects', tasks:'tasks', clients:'clients', quotes:'quotes',
+      invoices:'invoices', logs:'daily_logs', documents:'documents',
+      team:'team_members', milestones:'milestones', expenses:'expenses',
+      expenseCategories:'expense_categories'
+    };
+    const table = tableMap[type] || type;
+    const ok = await this.dbDelete(table, id);
+    if(!ok) return;
+    this.data[type] = this.data[type].filter(x=>x.id!==id);
+    this.render();
+    if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+  },
+
+  openLoginModal(isNew) {
+    document.getElementById('modalBox').className = 'modal';
+    document.getElementById('modalSaveBtn').style.display = 'none';
+    document.getElementById('modalFooter').style.display = 'none';
+    this.currentModal = isNew ? 'register' : 'login';
+    document.getElementById('modalTitle').textContent = isNew ? 'Create Account' : 'Sign In';
+    document.getElementById('modalBody').innerHTML = isNew ? `
+      <div class="form-group">
+        <label>Full Name</label>
+        <input id="regName" type="text" placeholder="e.g. John Smith" autocomplete="name">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input id="regEmail" type="email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div style="position:relative">
+          <input id="regPass" type="password" placeholder="Minimum 6 characters" autocomplete="new-password" style="padding-right:2.5rem">
+          <button type="button" onclick="app.togglePw('regPass',this)" style="position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-light);font-size:.9rem"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Confirm Password</label>
+        <div style="position:relative">
+          <input id="regPassCf" type="password" placeholder="Repeat password" autocomplete="new-password" style="padding-right:2.5rem">
+          <button type="button" onclick="app.togglePw('regPassCf',this)" style="position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-light);font-size:.9rem"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <p id="authError" style="color:var(--danger);font-size:.82rem;margin-bottom:.5rem;display:none"></p>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:.75rem" onclick="app.saveModal()">Create Account</button>
+      <p style="text-align:center;font-size:.82rem;color:var(--text-light)">Already have an account? <a href="#" style="color:var(--primary);font-weight:600" onclick="event.preventDefault();app.closeModal();app.openLoginModal(false)">Sign in</a></p>
+    ` : `
+      <div class="form-group">
+        <label>Email Address</label>
+        <input id="loginEmail" type="email" placeholder="you@example.com" autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <div style="position:relative">
+          <input id="loginPass" type="password" placeholder="Your password" autocomplete="current-password" style="padding-right:2.5rem">
+          <button type="button" onclick="app.togglePw('loginPass',this)" style="position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-light);font-size:.9rem"><i class="fas fa-eye"></i></button>
+        </div>
+      </div>
+      <p id="authError" style="color:var(--danger);font-size:.82rem;margin-bottom:.5rem;display:none"></p>
+      <button class="btn btn-primary" style="width:100%;margin-bottom:.75rem" onclick="app.saveModal()">Sign In</button>
+      <p style="text-align:center;font-size:.82rem;color:var(--text-light)">Don't have an account? <a href="#" style="color:var(--primary);font-weight:600" onclick="event.preventDefault();app.closeModal();app.openLoginModal(true)">Create one</a></p>
+    `;
+    document.getElementById('modal').classList.add('active');
+  },
+
+  togglePw(inputId, btn) {
+    const el = document.getElementById(inputId);
+    const show = el.type === 'password';
+    el.type = show ? 'text' : 'password';
+    btn.innerHTML = show ? '<i class="fas fa-eye-slash"></i>' : '<i class="fas fa-eye"></i>';
+  },
+
+  openModal(type) {
+    const H = s => this.escapeHtml(s);
+    this.currentModal = type;
+    const titles = {project:'Add Project',task:'Add Task',quote:'New Quote',invoice:'New Invoice',expense:'Add Budget Item',client:'Add Client',log:'Add Log',milestone:'Add Milestone',team:'Add Team Member'};
+    document.getElementById('modalTitle').textContent = titles[type]||'Add';
+    document.getElementById('modalBox').className = 'modal';
+    document.getElementById('modalSaveBtn').textContent = 'Save';
+    document.getElementById('modalFooter').style.display = 'flex';
+    const clientOpts = this.data.clients.map(c=>`<option value="${c.id}">${H(c.name)}</option>`).join('');
+    const projOpts = this.data.projects.map(p=>`<option value="${p.id}">${H(p.name)}</option>`).join('');
+    const teamOpts = `<option value="">Unassigned</option>`+this.data.team.map(m=>`<option value="${m.id}">${H(m.name)}</option>`).join('');
+    let html = '';
+    if(type==='project') html=`
+      <div class="form-group"><label>Project Name</label><input id="f_name" placeholder="e.g. Office Renovation"></div>
+      <div class="form-group"><label>Description</label><textarea id="f_desc" rows="2"></textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Client</label><select id="f_client">${clientOpts}</select></div>
+        <div class="form-group"><label>Status</label><select id="f_status"><option>Planning</option><option>In Progress</option><option>Completed</option></select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Budget (${this.currency})</label><input type="number" id="f_budget" placeholder="0"></div>
+        <div class="form-group"><label>Spent (${this.currency})</label><input type="number" id="f_spent" value="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Start Date</label><input type="date" id="f_start"></div>
+        <div class="form-group"><label>Deadline</label><input type="date" id="f_deadline"></div>
+      </div>`;
+    else if(type==='task') html=`
+      <div class="form-group"><label>Task Name</label><input id="f_taskname" placeholder="e.g. Pour foundation"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Project</label><select id="f_proj">${projOpts}</select></div>
+        <div class="form-group"><label>Due Date</label><input type="date" id="f_due"></div>
+      </div>
+      <div class="form-group"><label>Assign To</label><select id="f_assign">${teamOpts}</select></div>`;
+    else if(type==='client') html=`
+      <div class="form-group"><label>Full Name</label><input id="f_cname" placeholder="e.g. John Smith"></div>
+      <div class="form-group"><label>Company</label><input id="f_company" placeholder="e.g. Smith Construction"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" id="f_email" placeholder="john@smith.co.za"></div>
+        <div class="form-group"><label>Phone</label><input id="f_phone" placeholder="011 123 4567"></div>
+      </div>`;
+    else if(type==='quote') html=`
+      <div class="form-row">
+        <div class="form-group"><label>Client</label><select id="f_qclient">${clientOpts}</select></div>
+        <div class="form-group"><label>Project</label><select id="f_qproj"><option value="">None</option>${projOpts}</select></div>
+      </div>
+      <div class="form-group"><label>Status</label><select id="f_qstatus"><option>Pending</option><option>Accepted</option><option>Rejected</option></select></div>
+      <div id="quoteItems"></div>
+      <button type="button" class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="app.addQuoteItem()">+ Add Line Item</button>`;
+    else if(type==='invoice') html=`
+      <div class="form-row">
+        <div class="form-group"><label>Client</label><select id="f_iclient">${clientOpts}</select></div>
+        <div class="form-group"><label>Project</label><select id="f_iproj"><option value="">None</option>${projOpts}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label><select id="f_istatus"><option>Pending</option><option>Paid</option><option>Overdue</option></select></div>
+        <div class="form-group"><label>Invoice Date</label><input type="date" id="f_idate" value="${new Date().toISOString().split('T')[0]}"></div>
+      </div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="f_idue"></div>
+      <div id="quoteItems"></div>
+      <button type="button" class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="app.addQuoteItem()">+ Add Line Item</button>`;
+    else if(type==='log') html=`
+      <div class="form-row">
+        <div class="form-group"><label>Project</label><select id="f_lproj"><option value="">General</option>${projOpts}</select></div>
+        <div class="form-group"><label>Date</label><input type="date" id="f_ldate" value="${new Date().toISOString().split('T')[0]}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Weather</label><select id="f_weather"><option>Sunny</option><option>Cloudy</option><option>Rainy</option><option>Windy</option><option>Stormy</option></select></div>
+        <div class="form-group"><label>Crew Size</label><input type="number" id="f_crew" placeholder="e.g. 8" min="0"></div>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="f_notes" placeholder="Describe today's work..."></textarea></div>`;
+    else if(type==='milestone') html=`
+      <div class="form-group"><label>Milestone Name</label><input id="f_mname" placeholder="e.g. Roof Complete"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Project</label><select id="f_mproj">${projOpts}</select></div>
+        <div class="form-group"><label>Target Date</label><input type="date" id="f_mdate"></div>
+      </div>`;
+    else if(type==='team') html=`
+      <div class="form-group"><label>Full Name</label><input id="f_tname" placeholder="e.g. James Khumalo"></div>
+      <div class="form-group"><label>Role</label><input id="f_trole" placeholder="e.g. Site Foreman"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" id="f_temail"></div>
+        <div class="form-group"><label>Phone</label><input id="f_tphone"></div>
+      </div>`;
+    else if(type==='expense') html=`
+      <div class="form-group"><label>Description</label><input id="f_edesc" placeholder="e.g. Foundation concrete mix"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Category</label><select id="f_etype">${this.getCatNames().map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Project</label><select id="f_eproj"><option value="">None</option>${projOpts}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Planned Amount (${this.currency})</label><input type="number" id="f_eplanned" placeholder="0" min="0"></div>
+        <div class="form-group"><label>Actual Amount (${this.currency})</label><input type="number" id="f_eactual" placeholder="0 — leave blank if not incurred" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Date</label><input type="date" id="f_edate" value="${new Date().toISOString().split('T')[0]}"></div>
+        <div class="form-group"><label>Notes</label><input id="f_enotes" placeholder="Optional notes"></div>
+      </div>`;
+    document.getElementById('modalBody').innerHTML = html;
+    if(type==='quote'||type==='invoice') this.addQuoteItem();
+    document.getElementById('modal').classList.add('active');
+  },
+
+  addQuoteItem() {
+    const container = document.getElementById('quoteItems');
+    const idx = container.children.length;
+    const div = document.createElement('div');
+    div.style.cssText = 'display:grid;grid-template-columns:1fr auto auto auto;gap:.5rem;align-items:end;margin-bottom:.5rem';
+    div.innerHTML = `
+      <div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Description</label><input class="qi-desc" placeholder="Item description"></div>
+      <div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Qty</label><input type="number" class="qi-qty" value="1" style="width:60px"></div>
+      <div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Rate</label><input type="number" class="qi-rate" placeholder="0" style="width:110px"></div>
+      <button type="button" onclick="this.parentElement.remove()" style="background:#fee2e2;color:#991b1b;border:none;border-radius:4px;padding:.4rem .6rem;cursor:pointer;margin-bottom:1px">✕</button>
+    `;
+    container.appendChild(div);
+  },
+
+  closeModal() {
+    document.getElementById('modal').classList.remove('active');
+    document.getElementById('modalSaveBtn').style.display = '';
+    document.getElementById('modalCancelBtn').textContent = 'Cancel';
+    document.getElementById('modalBox').className = 'modal';
+    this.currentModal = null;
+  },
+
+  async saveModal() {
+    const type = this.currentModal;
+    const today = new Date().toISOString().split('T')[0];
+
+    if(type && type.startsWith('editExpense_')) {
+      const id = type.replace('editExpense_','');
+      const e = (this.data.expenses||[]).find(x=>x.id===id);
+      if(e) {
+        const changes = {
+          description: document.getElementById('f_edesc').value.trim()||e.description,
+          type: document.getElementById('f_etype').value,
+          projectId: document.getElementById('f_eproj').value||null,
+          planned: parseFloat(document.getElementById('f_eplanned').value)||0,
+          actual: parseFloat(document.getElementById('f_eactual').value)||0,
+          date: document.getElementById('f_edate').value,
+          notes: document.getElementById('f_enotes').value,
+        };
+        const updated = await this.dbUpdate('expenses', id, changes);
+        if(!updated) return;
+        Object.assign(e, changes);
+        this.closeModal(); this.render();
+        if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+      }
+      return;
+    }
+    if(type==='view') { this.closeModal(); return; }
+    if(type && type.startsWith('editQuote_')) {
+      const id = type.replace('editQuote_','');
+      const q = this.data.quotes.find(x=>x.id===id);
+      if(q) {
+        const changes = {
+          clientId: document.getElementById('f_qclient').value,
+          projectId: document.getElementById('f_qproj').value||null,
+          status: document.getElementById('f_qstatus').value,
+          date: document.getElementById('f_qdate').value,
+          items: [...document.querySelectorAll('#quoteItems > div')].map(d=>({desc:d.querySelector('.qi-desc').value,qty:parseFloat(d.querySelector('.qi-qty').value)||1,rate:parseFloat(d.querySelector('.qi-rate').value)||0})).filter(i=>i.desc),
+        };
+        const updated = await this.dbUpdate('quotes', id, changes);
+        if(!updated) return;
+        Object.assign(q, changes);
+        this.closeModal(); this.render();
+      }
+      return;
+    }
+    if(type && type.startsWith('editInvoice_')) {
+      const id = type.replace('editInvoice_','');
+      const inv = this.data.invoices.find(x=>x.id===id);
+      if(inv) {
+        const items = [...document.querySelectorAll('#quoteItems > div')].map(d=>({desc:d.querySelector('.qi-desc').value,qty:parseFloat(d.querySelector('.qi-qty').value)||1,rate:parseFloat(d.querySelector('.qi-rate').value)||0})).filter(i=>i.desc);
+        const changes = {
+          clientId: document.getElementById('f_iclient').value,
+          projectId: document.getElementById('f_iproj').value||null,
+          status: document.getElementById('f_istatus').value,
+          date: document.getElementById('f_idate').value,
+          dueDate: document.getElementById('f_idue').value,
+          items,
+          amount: items.reduce((s,i)=>s+(i.qty*i.rate),0),
+        };
+        const updated = await this.dbUpdate('invoices', id, changes);
+        if(!updated) return;
+        Object.assign(inv, changes);
+        this.closeModal(); this.render();
+      }
+      return;
+    }
+    if(type && type.startsWith('editProject_')) {
+      const id = type.replace('editProject_','');
+      const p = this.data.projects.find(x=>x.id===id);
+      if(p) {
+        const changes = {
+          name: document.getElementById('f_name').value.trim()||p.name,
+          description: document.getElementById('f_desc').value,
+          clientId: document.getElementById('f_client').value||null,
+          status: document.getElementById('f_status').value,
+          budget: parseFloat(document.getElementById('f_budget').value)||0,
+          spent: parseFloat(document.getElementById('f_spent').value)||0,
+          startDate: document.getElementById('f_start').value||null,
+          deadline: document.getElementById('f_deadline').value||null,
+        };
+        const updated = await this.dbUpdate('projects', id, changes);
+        if(!updated) return;
+        Object.assign(p, changes);
+        this.closeModal(); this.render();
+      }
+      return;
+    }
+
+    if(type==='email') {
+      alert('Email sent to: ' + (document.getElementById('emailTo')?.value||''));
+      this.closeModal(); return;
+    }
+    if(type==='register') {
+      const name = (document.getElementById('regName')?.value||'').trim();
+      const email = (document.getElementById('regEmail')?.value||'').trim().toLowerCase();
+      const pass = document.getElementById('regPass')?.value||'';
+      const passcf = document.getElementById('regPassCf')?.value||'';
+      const errEl = document.getElementById('authError');
+      const showErr = msg => { errEl.textContent=msg; errEl.style.display='block'; };
+      if(!name) return showErr('Full name is required.');
+      if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showErr('Please enter a valid email address.');
+      if(pass.length < 6) return showErr('Password must be at least 6 characters.');
+      if(pass !== passcf) return showErr('Passwords do not match.');
+      const {data:authData, error:authError} = await sb.auth.signUp({
+        email,
+        password: pass,
+        options: { data: { full_name: name } }
+      });
+      if(authError) return showErr(authError.message);
+      this.closeModal();
+      alert('Account created! Please check your email to confirm your account, then log in.');
+      return;
+    }
+    if(type==='login') {
+      const email = (document.getElementById('loginEmail')?.value||'').trim().toLowerCase();
+      const pass = document.getElementById('loginPass')?.value||'';
+      const errEl = document.getElementById('authError');
+      const showErr = msg => { errEl.textContent=msg; errEl.style.display='block'; };
+      if(!email||!pass) return showErr('Please enter your email and password.');
+      const {data:authData, error:authError} = await sb.auth.signInWithPassword({email, password:pass});
+      if(authError) return showErr(authError.message==='Invalid login credentials' ? 'Incorrect email or password.' : authError.message);
+      this.closeModal();
+      return;
+    }
+    if(type==='changepw') {
+      const cur = document.getElementById('f_pwcur').value;
+      const nw = document.getElementById('f_pwnew').value;
+      const cf = document.getElementById('f_pwcf').value;
+      const err = document.getElementById('pwError');
+      const showErr = msg => { err.textContent=msg; err.style.display='block'; };
+      if(!cur) return showErr('Please enter your current password.');
+      if(nw.length<6) return showErr('New password must be at least 6 characters.');
+      if(nw!==cf) return showErr('Passwords do not match.');
+      const {error:cpError} = await sb.auth.updateUser({password:nw});
+      if(cpError) return showErr(cpError.message);
+      alert('Password updated successfully.');
+      this.closeModal();
+      return;
+    }
+    if(type==='project') {
+      const name = document.getElementById('f_name').value.trim();
+      if(!name) return;
+      if(!(await this.canDo('create_project'))) { this.closeModal(); this.showUpgradeModal(); return; }
+      const rec = await this.dbInsert('projects',{name,description:document.getElementById('f_desc').value,clientId:document.getElementById('f_client').value||null,status:document.getElementById('f_status').value,budget:parseFloat(document.getElementById('f_budget').value)||0,spent:parseFloat(document.getElementById('f_spent').value)||0,startDate:document.getElementById('f_start').value||null,deadline:document.getElementById('f_deadline').value||null});
+      if(!rec) return;
+      this.data.projects.push(rec);
+    } else if(type==='task') {
+      const name = document.getElementById('f_taskname').value.trim();
+      if(!name) return;
+      const rec = await this.dbInsert('tasks',{name,projectId:document.getElementById('f_proj').value,completed:false,dueDate:document.getElementById('f_due').value||null,assignedTo:document.getElementById('f_assign').value||null});
+      if(!rec) return;
+      this.data.tasks.push(rec);
+    } else if(type==='client') {
+      const name = document.getElementById('f_cname').value.trim();
+      if(!name) return;
+      if(!(await this.canDo('create_client'))) { this.closeModal(); this.showUpgradeModal(); return; }
+      const rec = await this.dbInsert('clients',{name,company:document.getElementById('f_company').value,email:document.getElementById('f_email').value,phone:document.getElementById('f_phone').value});
+      if(!rec) return;
+      this.data.clients.push(rec);
+    } else if(type==='quote') {
+      const items = [...document.querySelectorAll('#quoteItems > div')].map(d=>({desc:d.querySelector('.qi-desc').value,qty:parseFloat(d.querySelector('.qi-qty').value)||1,rate:parseFloat(d.querySelector('.qi-rate').value)||0})).filter(i=>i.desc);
+      const rec = await this.dbInsert('quotes',{clientId:document.getElementById('f_qclient').value||null,projectId:document.getElementById('f_qproj').value||null,items,status:document.getElementById('f_qstatus').value,date:today});
+      if(!rec) return;
+      this.data.quotes.push(rec);
+    } else if(type==='invoice') {
+      const items = [...document.querySelectorAll('#quoteItems > div')].map(d=>({desc:d.querySelector('.qi-desc').value,qty:parseFloat(d.querySelector('.qi-qty').value)||1,rate:parseFloat(d.querySelector('.qi-rate').value)||0})).filter(i=>i.desc);
+      if(!items.length) return;
+      const amount = items.reduce((s,i)=>s+(i.qty*i.rate),0);
+      const rec = await this.dbInsert('invoices',{clientId:document.getElementById('f_iclient').value||null,projectId:document.getElementById('f_iproj').value||null,items,amount,status:document.getElementById('f_istatus').value,date:document.getElementById('f_idate').value,dueDate:document.getElementById('f_idue').value||null});
+      if(!rec) return;
+      this.data.invoices.push(rec);
+    } else if(type==='log') {
+      const rec = await this.dbInsert('daily_logs',{projectId:document.getElementById('f_lproj').value||null,date:document.getElementById('f_ldate').value,weather:document.getElementById('f_weather').value,crew:parseInt(document.getElementById('f_crew').value)||null,notes:document.getElementById('f_notes').value});
+      if(!rec) return;
+      this.data.logs.push(rec);
+    } else if(type==='milestone') {
+      const name = document.getElementById('f_mname').value.trim();
+      if(!name) return;
+      const rec = await this.dbInsert('milestones',{name,projectId:document.getElementById('f_mproj').value,date:document.getElementById('f_mdate').value||null,completed:false});
+      if(!rec) return;
+      this.data.milestones.push(rec);
+    } else if(type==='team') {
+      const name = document.getElementById('f_tname').value.trim();
+      if(!name) return;
+      const rec = await this.dbInsert('team_members',{name,role:document.getElementById('f_trole').value,email:document.getElementById('f_temail').value,phone:document.getElementById('f_tphone').value,color:COLORS[this.data.team.length%COLORS.length]});
+      if(!rec) return;
+      this.data.team.push(rec);
+    } else if(type==='expense') {
+      const desc = document.getElementById('f_edesc').value.trim();
+      if(!desc) return;
+      const rec = await this.dbInsert('expenses',{description:desc,type:document.getElementById('f_etype').value,projectId:document.getElementById('f_eproj').value||null,planned:parseFloat(document.getElementById('f_eplanned').value)||0,actual:parseFloat(document.getElementById('f_eactual').value)||0,date:document.getElementById('f_edate').value,notes:document.getElementById('f_enotes').value});
+      if(!rec) return;
+      if(!this.data.expenses) this.data.expenses = [];
+      this.data.expenses.push(rec);
+    }
+    this.closeModal(); this.render();
+    if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+  },
+
+  openEditProject(id) {
+    const H = s => this.escapeHtml(s);
+    const p = this.data.projects.find(x=>x.id===id);
+    if(!p) return;
+    this.currentModal = 'editProject_'+id;
+    document.getElementById('modalTitle').textContent = 'Edit Project';
+    document.getElementById('modalSaveBtn').textContent = 'Update';
+    const clientOpts = this.data.clients.map(c=>`<option value="${c.id}" ${c.id===p.clientId?'selected':''}>${H(c.name)}</option>`).join('');
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-group"><label>Project Name</label><input id="f_name" value="${H(p.name)}"></div>
+      <div class="form-group"><label>Description</label><textarea id="f_desc">${H(p.description||'')}</textarea></div>
+      <div class="form-row">
+        <div class="form-group"><label>Client</label><select id="f_client">${clientOpts}</select></div>
+        <div class="form-group"><label>Status</label><select id="f_status">
+          ${['Planning','In Progress','Completed'].map(s=>`<option ${s===p.status?'selected':''}>${s}</option>`).join('')}
+        </select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Budget</label><input type="number" id="f_budget" value="${p.budget}"></div>
+        <div class="form-group"><label>Spent</label><input type="number" id="f_spent" value="${p.spent}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Start Date</label><input type="date" id="f_start" value="${p.startDate||''}"></div>
+        <div class="form-group"><label>Deadline</label><input type="date" id="f_deadline" value="${p.deadline||''}"></div>
+      </div>`;
+    document.getElementById('modal').classList.add('active');
+  },
+
+
+  async addCategory() {
+    const nameEl = document.getElementById('budgetCatName');
+    const colorEl = document.getElementById('budgetCatColor');
+    const err = document.getElementById('catError');
+    const name = (nameEl?.value||'').trim();
+    const color = colorEl?.value || '#6b7280';
+    if(!name) { if(err){err.textContent='Please enter a category name.';err.style.display='block';} return; }
+    if(this.getCats().find(c=>c.name.toLowerCase()===name.toLowerCase())) { if(err){err.textContent='A category with this name already exists.';err.style.display='block';} return; }
+    const rec = await this.dbInsert('expense_categories',{name,color,isDefault:false});
+    if(!rec) return;
+    if(!this.data.expenseCategories) this.data.expenseCategories=[];
+    this.data.expenseCategories.push(rec);
+    this.renderBudget();
+  },
+
+  async deleteCategory(name) {
+    const inUse = (this.data.expenses||[]).some(e=>e.type===name);
+    if(inUse && !confirm(`"${name}" is used by existing expenses. Deleting it will not affect those expenses but the category will no longer appear in dropdowns. Continue?`)) return;
+    if(!inUse && !confirm(`Delete category "${name}"?`)) return;
+    const cat = this.getCats().find(c=>c.name===name);
+    if(cat && cat.id) {
+      const ok = await this.dbDelete('expense_categories', cat.id);
+      if(!ok) return;
+    }
+    this.data.expenseCategories = this.getCats().filter(c=>c.name!==name);
+    this.renderBudget();
+  },
+
+  openChangePw() {
+    this.currentModal = 'changepw';
+    document.getElementById('modalTitle').textContent = 'Change Password';
+    document.getElementById('modalBox').className = 'modal';
+    document.getElementById('modalSaveBtn').textContent = 'Update Password';
+    document.getElementById('modalSaveBtn').style.display = '';
+    document.getElementById('modalFooter').style.display = 'flex';
+    document.getElementById('modalBody').innerHTML = `
+      <p style="font-size:.82rem;color:var(--text-light);margin-bottom:.9rem">Signed in as <strong>${this.escapeHtml(this.currentEmail||'')}</strong></p>
+      <div class="form-group"><label>Current Password</label>
+        <div style="position:relative"><input type="password" id="f_pwcur" placeholder="Your current password" style="padding-right:2.5rem">
+        <button type="button" onclick="app.togglePw('f_pwcur',this)" style="position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-light)"><i class="fas fa-eye"></i></button></div>
+      </div>
+      <div class="form-group"><label>New Password</label>
+        <div style="position:relative"><input type="password" id="f_pwnew" placeholder="Minimum 6 characters" style="padding-right:2.5rem">
+        <button type="button" onclick="app.togglePw('f_pwnew',this)" style="position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-light)"><i class="fas fa-eye"></i></button></div>
+      </div>
+      <div class="form-group"><label>Confirm New Password</label>
+        <div style="position:relative"><input type="password" id="f_pwcf" placeholder="Repeat new password" style="padding-right:2.5rem">
+        <button type="button" onclick="app.togglePw('f_pwcf',this)" style="position:absolute;right:.6rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-light)"><i class="fas fa-eye"></i></button></div>
+      </div>
+      <p id="pwError" style="color:var(--danger);font-size:.82rem;margin-top:.4rem;display:none"></p>`;
+    document.getElementById('modal').classList.add('active');
+  },
+
+  openEditExpense(id) {
+    const H = s => this.escapeHtml(s);
+    if(!this.data.expenses) return;
+    const e = this.data.expenses.find(x=>x.id===id);
+    if(!e) return;
+    this.currentModal = 'editExpense_'+id;
+    document.getElementById('modalTitle').textContent = 'Edit Budget Item';
+    document.getElementById('modalSaveBtn').textContent = 'Update';
+    const projOpts = this.data.projects.map(p=>`<option value="${p.id}"${p.id===e.projectId?' selected':''}>${H(p.name)}</option>`).join('');
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-group"><label>Description</label><input id="f_edesc" value="${H(e.description)}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Category</label><select id="f_etype">${this.getCatNames().map(t=>`<option${t===e.type?' selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Project</label><select id="f_eproj"><option value="">None</option>${projOpts}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Planned Amount (${this.currency})</label><input type="number" id="f_eplanned" value="${e.planned||0}" min="0"></div>
+        <div class="form-group"><label>Actual Amount (${this.currency})</label><input type="number" id="f_eactual" value="${e.actual||0}" min="0"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Date</label><input type="date" id="f_edate" value="${e.date||''}"></div>
+        <div class="form-group"><label>Notes</label><input id="f_enotes" value="${H(e.notes||'')}"></div>
+      </div>`;
+    document.getElementById('modal').classList.add('active');
+  },
+
+  viewDoc(type, id) {
+    const H = s => this.escapeHtml(s);
+    const doc = type==='quote' ? this.data.quotes.find(x=>x.id===id) : this.data.invoices.find(x=>x.id===id);
+    if(!doc) return;
+    const c = this.data.clients.find(x=>x.id===doc.clientId);
+    const p = this.data.projects.find(x=>x.id===doc.projectId);
+    const num = type==='quote' ? `QT-${String(doc.id).padStart(4,'0')}` : `INV-${String(doc.id).padStart(4,'0')}`;
+    const items = (doc.items&&doc.items.length) ? doc.items : (doc.amount?[{desc:'Services Rendered',qty:1,rate:doc.amount}]:[]);
+    const total = type==='quote' ? this.quoteTotal(doc) : this.invoiceTotal(doc);
+    const itemRows = items.map(item=>{
+      const lt = (item.qty||1)*(item.rate||0);
+      return `<tr><td style="padding:.55rem .75rem;border-bottom:1px solid var(--border)">${H(item.desc)}</td><td style="padding:.55rem .75rem;border-bottom:1px solid var(--border);text-align:center">${item.qty}</td><td style="padding:.55rem .75rem;border-bottom:1px solid var(--border);text-align:right">${this.fmt(item.rate)}</td><td style="padding:.55rem .75rem;border-bottom:1px solid var(--border);text-align:right;font-weight:600">${this.fmt(lt)}</td></tr>`;
+    }).join('');
+    document.getElementById('modalTitle').textContent = type==='quote'?'Quote Preview':'Invoice Preview';
+    document.getElementById('modalBox').className = 'modal modal-lg';
+    document.getElementById('modalSaveBtn').style.display = 'none';
+    document.getElementById('modalCancelBtn').textContent = 'Close';
+    document.getElementById('modalFooter').style.display = 'flex';
+    this.currentModal = 'view';
+    document.getElementById('modalBody').innerHTML = `
+      <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;font-size:.88rem">
+        <div style="background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:white;padding:1.25rem 1.5rem">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:.5rem">
+            <div><div style="font-size:1.2rem;font-weight:800"><i class="fas fa-hard-hat"></i> BuildTracker</div><div style="font-size:.75rem;opacity:.75;margin-top:.1rem">Construction Project Management</div></div>
+            <div style="text-align:right"><div style="font-size:1.4rem;font-weight:800">${num}</div><div style="font-size:.72rem;opacity:.75;letter-spacing:.08em">${type==='quote'?'QUOTATION':'TAX INVOICE'}</div><div style="margin-top:.3rem">${this.statusBadge(doc.status)}</div></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--border)">
+          <div style="padding:.9rem 1.25rem;border-right:1px solid var(--border)">
+            <div style="font-size:.68rem;text-transform:uppercase;color:var(--text-light);letter-spacing:.06em;margin-bottom:.35rem">Billed To</div>
+            <div style="font-weight:700">${c?H(c.name):'—'}</div>
+            ${c?`<div style="color:var(--text-light)">${H(c.company)}</div><div style="color:var(--text-light)">${H(c.email)}</div><div style="color:var(--text-light)">${H(c.phone)}</div>`:''}
+          </div>
+          <div style="padding:.9rem 1.25rem">
+            <div style="font-size:.68rem;text-transform:uppercase;color:var(--text-light);letter-spacing:.06em;margin-bottom:.35rem">Details</div>
+            <div style="display:flex;flex-direction:column;gap:.2rem">
+              <div><span style="color:var(--text-light)">Project:</span> <strong>${p?H(p.name):'—'}</strong></div>
+              <div><span style="color:var(--text-light)">${type==='quote'?'Quote Date:':'Issue Date:'}</span> <strong>${doc.date||'—'}</strong></div>
+              ${type==='invoice'?`<div><span style="color:var(--text-light)">Due Date:</span> <strong style="color:${doc.status==='Overdue'?'var(--danger)':'inherit'}">${doc.dueDate||'—'}</strong></div>`:''}
+              ${type==='quote'?`<div style="color:var(--text-light);font-size:.8rem;margin-top:.2rem">Valid for 30 days from issue date</div>`:''}
+            </div>
+          </div>
+        </div>
+        <div style="padding:.9rem 1.25rem">
+          <table style="width:100%;border-collapse:collapse">
+            <thead><tr style="background:var(--bg)">
+              <th style="padding:.45rem .75rem;text-align:left;font-size:.68rem;text-transform:uppercase;color:var(--text-light);border-bottom:2px solid var(--border)">Description</th>
+              <th style="padding:.45rem .75rem;text-align:center;font-size:.68rem;text-transform:uppercase;color:var(--text-light);border-bottom:2px solid var(--border);width:55px">Qty</th>
+              <th style="padding:.45rem .75rem;text-align:right;font-size:.68rem;text-transform:uppercase;color:var(--text-light);border-bottom:2px solid var(--border);width:110px">Unit Price</th>
+              <th style="padding:.45rem .75rem;text-align:right;font-size:.68rem;text-transform:uppercase;color:var(--text-light);border-bottom:2px solid var(--border);width:110px">Total</th>
+            </tr></thead>
+            <tbody>${itemRows}</tbody>
+          </table>
+        </div>
+        <div style="padding:.5rem 1.25rem 1.1rem;display:flex;justify-content:flex-end">
+          <div style="min-width:210px;font-size:.88rem">
+            <div style="display:flex;justify-content:space-between;padding:.35rem 0;color:var(--text-light);border-top:1px solid var(--border)"><span>Subtotal</span><span>${this.fmt(total)}</span></div>
+            <div style="display:flex;justify-content:space-between;padding:.45rem 0;font-size:1rem;font-weight:800;border-top:2px solid var(--text);margin-top:.2rem"><span>TOTAL</span><span>${this.fmt(total)}</span></div>
+          </div>
+        </div>
+        <div style="padding:.65rem 1.25rem;background:var(--bg);border-top:1px solid var(--border);font-size:.75rem;color:var(--text-light)">
+          ${type==='quote'?'<i class="fas fa-info-circle"></i> This quote is valid for 30 days. To accept, please contact admin@buildtracker.co.za.':'<i class="fas fa-info-circle"></i> Please use the invoice number as your payment reference. Late payments may incur interest.'}
+        </div>
+      </div>`;
+    document.getElementById('modal').classList.add('active');
+  },
+
+  openEditQuote(id) {
+    const H = s => this.escapeHtml(s);
+    const q = this.data.quotes.find(x=>x.id===id);
+    if(!q) return;
+    this.currentModal = 'editQuote_'+id;
+    document.getElementById('modalTitle').textContent = `Edit QT-${String(q.id).padStart(4,'0')}`;
+    document.getElementById('modalBox').className = 'modal modal-lg';
+    document.getElementById('modalSaveBtn').textContent = 'Update Quote';
+    document.getElementById('modalFooter').style.display = 'flex';
+    const clientOpts = this.data.clients.map(c=>`<option value="${c.id}"${c.id===q.clientId?' selected':''}>${H(c.name)}</option>`).join('');
+    const projOpts = this.data.projects.map(p=>`<option value="${p.id}"${p.id===q.projectId?' selected':''}>${H(p.name)}</option>`).join('');
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-row">
+        <div class="form-group"><label>Client</label><select id="f_qclient">${clientOpts}</select></div>
+        <div class="form-group"><label>Project</label><select id="f_qproj"><option value="">None</option>${projOpts}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label><select id="f_qstatus">${['Pending','Accepted','Rejected'].map(s=>`<option${s===q.status?' selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Date</label><input type="date" id="f_qdate" value="${q.date||''}"></div>
+      </div>
+      <div id="quoteItems"></div>
+      <button type="button" class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="app.addQuoteItem()">+ Add Line Item</button>`;
+    (q.items||[]).forEach((item,idx) => {
+      const container = document.getElementById('quoteItems');
+      const div = document.createElement('div');
+      div.style.cssText = 'display:grid;grid-template-columns:1fr auto auto auto;gap:.5rem;align-items:end;margin-bottom:.5rem';
+      div.innerHTML = `<div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Description</label><input class="qi-desc" value="${H(item.desc||'')}"></div><div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Qty</label><input type="number" class="qi-qty" value="${item.qty||1}" style="width:60px"></div><div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Rate</label><input type="number" class="qi-rate" value="${item.rate||0}" style="width:110px"></div><button type="button" onclick="this.parentElement.remove()" style="background:#fee2e2;color:#991b1b;border:none;border-radius:4px;padding:.4rem .6rem;cursor:pointer;margin-bottom:1px">✕</button>`;
+      container.appendChild(div);
+    });
+    if(!(q.items||[]).length) this.addQuoteItem();
+    document.getElementById('modal').classList.add('active');
+  },
+
+  openEditInvoice(id) {
+    const H = s => this.escapeHtml(s);
+    const inv = this.data.invoices.find(x=>x.id===id);
+    if(!inv) return;
+    this.currentModal = 'editInvoice_'+id;
+    document.getElementById('modalTitle').textContent = `Edit INV-${String(inv.id).padStart(4,'0')}`;
+    document.getElementById('modalBox').className = 'modal modal-lg';
+    document.getElementById('modalSaveBtn').textContent = 'Update Invoice';
+    document.getElementById('modalFooter').style.display = 'flex';
+    const clientOpts = this.data.clients.map(c=>`<option value="${c.id}"${c.id===inv.clientId?' selected':''}>${H(c.name)}</option>`).join('');
+    const projOpts = this.data.projects.map(p=>`<option value="${p.id}"${p.id===inv.projectId?' selected':''}>${H(p.name)}</option>`).join('');
+    const items = (inv.items&&inv.items.length) ? inv.items : (inv.amount?[{desc:'Services Rendered',qty:1,rate:inv.amount}]:[]);
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-row">
+        <div class="form-group"><label>Client</label><select id="f_iclient">${clientOpts}</select></div>
+        <div class="form-group"><label>Project</label><select id="f_iproj"><option value="">None</option>${projOpts}</select></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Status</label><select id="f_istatus">${['Pending','Paid','Overdue'].map(s=>`<option${s===inv.status?' selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Invoice Date</label><input type="date" id="f_idate" value="${inv.date||''}"></div>
+      </div>
+      <div class="form-group"><label>Due Date</label><input type="date" id="f_idue" value="${inv.dueDate||''}"></div>
+      <div id="quoteItems"></div>
+      <button type="button" class="btn btn-secondary btn-sm" style="margin-top:.5rem" onclick="app.addQuoteItem()">+ Add Line Item</button>`;
+    items.forEach((item,idx) => {
+      const container = document.getElementById('quoteItems');
+      const div = document.createElement('div');
+      div.style.cssText = 'display:grid;grid-template-columns:1fr auto auto auto;gap:.5rem;align-items:end;margin-bottom:.5rem';
+      div.innerHTML = `<div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Description</label><input class="qi-desc" value="${H(item.desc||'')}"></div><div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Qty</label><input type="number" class="qi-qty" value="${item.qty||1}" style="width:60px"></div><div class="form-group" style="margin:0"><label style="${idx?'display:none':''}">Rate</label><input type="number" class="qi-rate" value="${item.rate||0}" style="width:110px"></div><button type="button" onclick="this.parentElement.remove()" style="background:#fee2e2;color:#991b1b;border:none;border-radius:4px;padding:.4rem .6rem;cursor:pointer;margin-bottom:1px">✕</button>`;
+      container.appendChild(div);
+    });
+    if(!items.length) this.addQuoteItem();
+    document.getElementById('modal').classList.add('active');
+  },
+
+  async convertToInvoice(quoteId) {
+    const q = this.data.quotes.find(x=>x.id===quoteId);
+    if(!q) return;
+    if(!confirm(`Convert QT-${String(q.id).padStart(4,'0')} to an invoice?`)) return;
+    const rec = await this.dbInsert('invoices',{
+      clientId:q.clientId, projectId:q.projectId, items:q.items,
+      amount:this.invoiceTotal({items:q.items}), status:'Pending',
+      date:new Date().toISOString().split('T')[0],
+      dueDate:new Date(Date.now()+30*86400000).toISOString().split('T')[0]
+    });
+    if(!rec) return;
+    this.data.invoices.push(rec);
+    const upd = await this.dbUpdate('quotes', quoteId, {status:'Accepted'});
+    if(upd) { const qi = this.data.quotes.findIndex(x=>x.id===quoteId); if(qi>-1) this.data.quotes[qi].status='Accepted'; }
+    this.render();
+    document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.content-section').forEach(x=>x.classList.remove('active'));
+    document.querySelector('[data-tab="invoices"]').classList.add('active');
+    document.getElementById('invoices').classList.add('active');
+    alert('Quote converted to invoice successfully.');
+  },
+
+  async markPaid(id) {
+    const updated = await this.dbUpdate('invoices', id, {status:'Paid'});
+    if(!updated) return;
+    const inv = this.data.invoices.find(x=>x.id===id);
+    if(inv) inv.status='Paid';
+    this.render();
+  },
+
+  emailDoc(type, id) {
+    const H = s => this.escapeHtml(s);
+    const doc = type==='quote' ? this.data.quotes.find(x=>x.id===id) : this.data.invoices.find(x=>x.id===id);
+    if(!doc) return;
+    const c = this.data.clients.find(x=>x.id===doc.clientId);
+    const num = type==='quote' ? `QT-${String(doc.id).padStart(4,'0')}` : `INV-${String(doc.id).padStart(4,'0')}`;
+    const amt = type==='quote' ? this.fmt(this.quoteTotal(doc)) : this.fmt(this.invoiceTotal(doc));
+    const emailText = `To: ${c?c.email:'client@email.com'}\nSubject: ${num} from BuildTracker\n\nDear ${c?c.name:'Client'},\n\nPlease find attached your ${type} ${num} for ${amt}.\n\n${type==='quote'?'This quote is valid for 30 days.':'Payment is due by '+doc.dueDate+'.'}\n\nKind regards,\nBuildTracker Team`;
+    document.getElementById('modalTitle').textContent = `Send ${type.charAt(0).toUpperCase()+type.slice(1)} by Email`;
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-group"><label>To</label><input id="emailTo" value="${H(c?c.email:'')}"></div>
+      <div class="form-group"><label>Subject</label><input id="emailSubj" value="${num} from BuildTracker"></div>
+      <div class="form-group"><label>Message Preview</label><div class="email-preview">${H(emailText)}</div></div>
+      <p style="font-size:.8rem;color:var(--text-light);margin-top:.5rem"><i class="fas fa-info-circle"></i> In production, this would send via your connected email service.</p>
+    `;
+    document.getElementById('modalSaveBtn').textContent = 'Send Email';
+    this.currentModal = 'email';
+    document.getElementById('modal').classList.add('active');
+  },
+
+  async handleFileUpload(e) {
+    if(!(await this.canDo('upload_doc'))) { this.showUpgradeModal(); return; }
+    const files = Array.from(e.target.files);
+    for(const f of files) {
+      const ext = f.name.split('.').pop().toLowerCase();
+      const size = f.size > 1024*1024 ? (f.size/1024/1024).toFixed(1)+' MB' : Math.round(f.size/1024)+' KB';
+      const rec = await this.dbInsert('documents',{projectId:this.currentProjectId||null,name:f.name,type:ext,size,date:new Date().toISOString().split('T')[0],uploadedBy:this.currentUser||'Admin'});
+      if(rec) this.data.documents.push(rec);
+    }
+    e.target.value = '';
+    this.render();
+  },
+
+  exportPDF() { window.print(); },
+
+  exportData() {
+    const json = JSON.stringify(this.data, null, 2);
+    const a = Object.assign(document.createElement('a'), {href:'data:application/json;charset=utf-8,'+encodeURIComponent(json), download:`buildtracker-backup-${new Date().toISOString().split('T')[0]}.json`});
+    a.click();
+  },
+
+  importData() {
+    const input = Object.assign(document.createElement('input'), {type:'file', accept:'.json'});
+    input.onchange = async e => {
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        try {
+          const imported = JSON.parse(ev.target.result);
+          if(!imported.projects||!imported.clients) { alert('Invalid backup file.'); return; }
+          if(!confirm('This will replace ALL current data with the backup. Continue?')) return;
+          this.data = imported;
+          if(!this.data.expenseCategories) this.data.expenseCategories = this.defaultData().expenseCategories;
+          if(!this.data.expenses) this.data.expenses = [];
+          // Reload from Supabase after any import
+          await this.load();
+          this.render();
+          alert('Data restored. Note: Full import from backup requires data to be in Supabase format.');
+        } catch(err) { alert('Could not read file. Please select a valid BuildTracker backup.'); }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  },
+};
+
+app.init();
+</script>
+</body>
+</html>
