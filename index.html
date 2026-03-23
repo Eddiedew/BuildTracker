@@ -871,7 +871,13 @@ const app = {
 
   async logout() {
     await sb.auth.signOut();
-    // onAuthStateChange handles UI reset
+    this.currentUserId = null;
+    this.currentUser = null;
+    this.currentEmail = null;
+    this.isDemoMode = false;
+    this.data = this.defaultData();
+    document.getElementById('app').classList.remove('active');
+    document.getElementById('landing').classList.add('active');
     this.showProjectsList();
   },
 
