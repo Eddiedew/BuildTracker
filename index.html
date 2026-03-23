@@ -2082,10 +2082,13 @@ const app = {
       this.isDemoMode = false;
       this.currency = localStorage.getItem('buildtracker_currency')||'ZAR';
       this.projectView = localStorage.getItem('buildtracker_view')||'table';
-      await this.load();
+      console.log('Login OK, loading data...');
+      try { await this.load(); } catch(e) { console.error('load() threw:',e); }
+      console.log('Data loaded, calling showApp...');
       document.getElementById('currency').value = this.currency;
       this.closeModal();
       this.showApp();
+      console.log('showApp called');
       return;
     }
     if(type==='changepw') {
