@@ -1,0 +1,6 @@
+supabase.exe
+supabase_windows_amd64.tar.gz
+supabase/.temp/
+vercel.exe
+*.tar.gz
+*.exe
