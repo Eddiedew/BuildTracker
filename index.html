@@ -666,19 +666,20 @@ const app = {
 
   async load() {
     try {
+      const t = p => Promise.race([p, new Promise(res => setTimeout(() => res({data:null,error:{message:'timeout'}}), 8000))]);
       const results = await Promise.allSettled([
-        sb.from('clients').select('*').order('created_at'),
-        sb.from('projects').select('*').order('created_at'),
-        sb.from('tasks').select('*').order('created_at'),
-        sb.from('milestones').select('*').order('date'),
-        sb.from('quotes').select('*').order('created_at'),
-        sb.from('invoices').select('*').order('created_at'),
-        sb.from('daily_logs').select('*').order('date',{ascending:false}),
-        sb.from('documents').select('*').order('created_at'),
-        sb.from('team_members').select('*').order('name'),
-        sb.from('expenses').select('*').order('date'),
-        sb.from('expense_categories').select('*').order('name'),
-        sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).maybeSingle(),
+        t(sb.from('clients').select('*').order('created_at')),
+        t(sb.from('projects').select('*').order('created_at')),
+        t(sb.from('tasks').select('*').order('created_at')),
+        t(sb.from('milestones').select('*').order('date')),
+        t(sb.from('quotes').select('*').order('created_at')),
+        t(sb.from('invoices').select('*').order('created_at')),
+        t(sb.from('daily_logs').select('*').order('date',{ascending:false})),
+        t(sb.from('documents').select('*').order('created_at')),
+        t(sb.from('team_members').select('*').order('name')),
+        t(sb.from('expenses').select('*').order('date')),
+        t(sb.from('expense_categories').select('*').order('name')),
+        t(sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).maybeSingle()),
       ]);
       const get = (i) => results[i].status==='fulfilled' ? (results[i].value.data||[]) : [];
       const profile = results[11].status==='fulfilled' ? results[11].value.data : null;
@@ -2099,6 +2100,7 @@ const app = {
         this.closeModal();
         this.showApp();
       } catch(err) {
+        console.error('Login error:', err);
         showErr('Error: ' + (err?.message || String(err)));
       } finally {
         this._loginInProgress = false;
