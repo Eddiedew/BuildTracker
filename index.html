@@ -2049,8 +2049,22 @@ const app = {
         options: { data: { full_name: name } }
       });
       if(authError) return showErr(authError.message);
-      this.closeModal();
-      alert('Account created! Please check your email to confirm your account, then log in.');
+      // If email confirmation is off, user is logged in immediately
+      if(authData.session) {
+        this.currentUserId = authData.user.id;
+        this.currentEmail = authData.user.email;
+        this.currentUser = name;
+        this.isDemoMode = false;
+        this.currency = 'ZAR';
+        this.projectView = 'table';
+        await this.load();
+        document.getElementById('currency').value = this.currency;
+        this.closeModal();
+        this.showApp();
+      } else {
+        this.closeModal();
+        alert('Account created! Please check your email to confirm your account, then log in.');
+      }
       return;
     }
     if(type==='login') {
@@ -2061,7 +2075,17 @@ const app = {
       if(!email||!pass) return showErr('Please enter your email and password.');
       const {data:authData, error:authError} = await sb.auth.signInWithPassword({email, password:pass});
       if(authError) return showErr(authError.message==='Invalid login credentials' ? 'Incorrect email or password.' : authError.message);
+      // Directly handle transition — don't rely solely on onAuthStateChange
+      this.currentUserId = authData.user.id;
+      this.currentEmail = authData.user.email;
+      this.currentUser = authData.user.user_metadata?.full_name || authData.user.email.split('@')[0];
+      this.isDemoMode = false;
+      this.currency = localStorage.getItem('buildtracker_currency')||'ZAR';
+      this.projectView = localStorage.getItem('buildtracker_view')||'table';
+      await this.load();
+      document.getElementById('currency').value = this.currency;
       this.closeModal();
+      this.showApp();
       return;
     }
     if(type==='changepw') {
