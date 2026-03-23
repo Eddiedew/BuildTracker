@@ -658,11 +658,7 @@ const app = {
 
   async load() {
     try {
-      const [
-        {data:clients},{data:projects},{data:tasks},{data:milestones},
-        {data:quotes},{data:invoices},{data:logs},{data:documents},
-        {data:team},{data:expenses},{data:expenseCategories},{data:profile}
-      ] = await Promise.all([
+      const results = await Promise.allSettled([
         sb.from('clients').select('*').order('created_at'),
         sb.from('projects').select('*').order('created_at'),
         sb.from('tasks').select('*').order('created_at'),
@@ -674,14 +670,17 @@ const app = {
         sb.from('team_members').select('*').order('name'),
         sb.from('expenses').select('*').order('date'),
         sb.from('expense_categories').select('*').order('name'),
-        sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).single(),
+        sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).maybeSingle(),
       ]);
+      const get = (i) => results[i].status==='fulfilled' ? (results[i].value.data||[]) : [];
+      const profile = results[11].status==='fulfilled' ? results[11].value.data : null;
       this.data = {
-        clients:clients||[], projects:projects||[], tasks:tasks||[],
-        milestones:milestones||[], quotes:quotes||[], invoices:invoices||[],
-        logs:logs||[], documents:documents||[], team:team||[],
-        expenses:expenses||[], expenseCategories:expenseCategories||[]
+        clients:get(0), projects:get(1), tasks:get(2),
+        milestones:get(3), quotes:get(4), invoices:get(5),
+        logs:get(6), documents:get(7), team:get(8),
+        expenses:get(9), expenseCategories:get(10)
       };
+      if(!this.data.expenseCategories.length) this.data.expenseCategories = this.defaultData().expenseCategories;
       this.userPlan = profile?.plan||'free';
       this.userPlanStatus = profile?.plan_status||'active';
       if(profile?.name) this.currentUser = profile.name;
