@@ -1815,7 +1815,24 @@ const app = {
       <div class="form-group"><label>Project Name</label><input id="f_name" placeholder="e.g. Office Renovation"></div>
       <div class="form-group"><label>Description</label><textarea id="f_desc" rows="2"></textarea></div>
       <div class="form-row">
-        <div class="form-group"><label>Client</label><select id="f_client">${clientOpts}</select></div>
+        <div class="form-group">
+          <label>Client</label>
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <select id="f_client" style="flex:1">${clientOpts}</select>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="app.toggleNewClientFields()" title="Add new client" style="white-space:nowrap">+ New</button>
+          </div>
+          <div id="newClientFields" style="display:none;margin-top:.5rem;padding:.75rem;background:var(--bg);border-radius:8px;border:1px solid var(--border)">
+            <div style="font-size:.8rem;font-weight:600;margin-bottom:.5rem;color:var(--text-light)">NEW CLIENT</div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:.5rem"><label>Name *</label><input id="f_nc_name" placeholder="Client name"></div>
+              <div class="form-group" style="margin-bottom:.5rem"><label>Company</label><input id="f_nc_company" placeholder="Company name"></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group" style="margin-bottom:0"><label>Email</label><input id="f_nc_email" type="email" placeholder="email@example.com"></div>
+              <div class="form-group" style="margin-bottom:0"><label>Phone</label><input id="f_nc_phone" placeholder="Phone number"></div>
+            </div>
+          </div>
+        </div>
         <div class="form-group"><label>Status</label><select id="f_status"><option>Planning</option><option>In Progress</option><option>Completed</option></select></div>
       </div>
       <div class="form-row">
@@ -2066,7 +2083,19 @@ const app = {
       const name = document.getElementById('f_name').value.trim();
       if(!name) return;
       if(!(await this.canDo('create_project'))) { this.closeModal(); this.showUpgradeModal(); return; }
-      const rec = await this.dbInsert('projects',{name,description:document.getElementById('f_desc').value,clientId:document.getElementById('f_client').value||null,status:document.getElementById('f_status').value,budget:parseFloat(document.getElementById('f_budget').value)||0,spent:parseFloat(document.getElementById('f_spent').value)||0,startDate:document.getElementById('f_start').value||null,deadline:document.getElementById('f_deadline').value||null});
+      // Create new client inline if fields are visible
+      let clientId = document.getElementById('f_client').value||null;
+      const newClientFields = document.getElementById('newClientFields');
+      if(newClientFields && newClientFields.style.display !== 'none') {
+        const ncName = document.getElementById('f_nc_name')?.value.trim();
+        if(!ncName) { alert('Please enter a client name.'); return; }
+        if(!(await this.canDo('create_client'))) { this.closeModal(); this.showUpgradeModal(); return; }
+        const newClient = await this.dbInsert('clients',{name:ncName,company:document.getElementById('f_nc_company')?.value||'',email:document.getElementById('f_nc_email')?.value||'',phone:document.getElementById('f_nc_phone')?.value||''});
+        if(!newClient) return;
+        this.data.clients.push(newClient);
+        clientId = newClient.id;
+      }
+      const rec = await this.dbInsert('projects',{name,description:document.getElementById('f_desc').value,clientId,status:document.getElementById('f_status').value,budget:parseFloat(document.getElementById('f_budget').value)||0,spent:parseFloat(document.getElementById('f_spent').value)||0,startDate:document.getElementById('f_start').value||null,deadline:document.getElementById('f_deadline').value||null});
       if(!rec) return;
       this.data.projects.push(rec);
     } else if(type==='task') {
@@ -2120,6 +2149,15 @@ const app = {
     }
     this.closeModal(); this.render();
     if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+  },
+
+  toggleNewClientFields() {
+    const el = document.getElementById('newClientFields');
+    const sel = document.getElementById('f_client');
+    if(!el) return;
+    const show = el.style.display === 'none';
+    el.style.display = show ? 'block' : 'none';
+    if(sel) sel.disabled = show;
   },
 
   openEditProject(id) {
