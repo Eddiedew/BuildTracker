@@ -807,7 +807,6 @@ const app = {
     this._loginInProgress = false;
 
     sb.auth.onAuthStateChange(async (event, session) => {
-      // If the login handler is actively signing in, let it handle the transition
       if(this._loginInProgress) return;
       if(session) {
         this.currentUserId = session.user.id;
@@ -823,7 +822,8 @@ const app = {
           history.replaceState({},'',window.location.pathname);
           alert('Plan upgraded! Welcome to BuildTracker '+(PLAN_LIMITS[this.userPlan]?.label||'Pro')+'.');
         }
-      } else {
+      } else if(event === 'SIGNED_OUT') {
+        // Only return to landing on explicit sign-out, not on initial page load
         this.currentUserId = null;
         this.currentUser = null;
         this.currentEmail = null;
@@ -833,6 +833,21 @@ const app = {
         document.getElementById('landing').classList.add('active');
       }
     });
+
+    // Restore session on page refresh as a fallback
+    sb.auth.getSession().then(async ({ data: { session } }) => {
+      if(session && !this.currentUserId) {
+        this.currentUserId = session.user.id;
+        this.currentEmail = session.user.email;
+        this.currentUser = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
+        this.isDemoMode = false;
+        this.currency = localStorage.getItem('buildtracker_currency')||'ZAR';
+        this.projectView = localStorage.getItem('buildtracker_view')||'table';
+        await this.load();
+        document.getElementById('currency').value = this.currency;
+        this.showApp();
+      }
+    }).catch(() => {});
 
     document.querySelectorAll('.nav-tab').forEach(t => {
       t.addEventListener('click', () => {
