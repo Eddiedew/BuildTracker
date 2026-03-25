@@ -781,6 +781,7 @@ const app = {
   },
 
   async openBilling() {
+    if(this.userPlan === 'free') { this.showUpgradeModal(); return; }
     const {data,error} = await sb.functions.invoke('create-portal-session',{
       body:{return_url:window.location.href}
     });
