@@ -397,6 +397,13 @@ body.dark .gantt-month-cell{background:#1e3a5f!important;color:#93c5fd!important
     <div class="feature-card"><i class="fas fa-clipboard-list"></i><h3>Daily Logs</h3><p>Log weather, crew and daily progress notes</p></div>
     <div class="feature-card"><i class="fas fa-chart-gantt"></i><h3>Gantt Charts</h3><p>Visual project timelines and milestone tracking</p></div>
   </div>
+  <div style="background:#1a1a2e;color:#94a3b8;text-align:center;padding:1.5rem 1rem;font-size:.82rem">
+    <span>© 2026 BuildTracker. All rights reserved.</span>
+    <span style="margin:0 1rem">·</span>
+    <a href="/pricing.html" style="color:#94a3b8;text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">Pricing</a>
+    <span style="margin:0 1rem">·</span>
+    <a href="/terms.html" style="color:#94a3b8;text-decoration:none" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">Terms of Service</a>
+  </div>
 </div>
 
 <!-- APP -->
@@ -552,7 +559,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 
 const PLAN_LIMITS = {
   free:     { projects: 3,  clients: 10, docs: false, label: 'Free' },
-  pro:      { projects: 25, clients: -1, docs: true,  label: 'Pro ($29/mo)' },
+  pro:      { projects: 25, clients: -1, docs: true,  label: 'Pro ($19/mo)' },
   business: { projects: -1, clients: -1, docs: true,  label: 'Business ($79/mo)' },
 };
 
