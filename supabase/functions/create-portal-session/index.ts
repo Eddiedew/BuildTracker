@@ -1,83 +1,71 @@
-import Stripe from 'https://esm.sh/stripe@14?target=deno';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
-const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') as string, {
-  apiVersion: '2023-10-16',
-  httpClient: Stripe.createFetchHttpClient(),
-});
+const PADDLE_API = 'https://api.paddle.com';
 
-const supabase = createClient(
-  Deno.env.get('SUPABASE_URL') as string,
-  Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') as string
-);
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+};
 
 Deno.serve(async (req: Request) => {
-  // Handle CORS preflight
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      status: 204,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-        'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      },
-    });
-  }
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: corsHeaders });
 
-  const corsHeaders = {
-    'Access-Control-Allow-Origin': '*',
-    'Content-Type': 'application/json',
-  };
+  const jsonHeaders = { ...corsHeaders, 'Content-Type': 'application/json' };
 
-  // Authenticate the user
-  const authHeader = req.headers.get('Authorization');
-  if (!authHeader) {
-    return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
-      status: 401,
-      headers: corsHeaders,
-    });
-  }
-
-  const token = authHeader.replace('Bearer ', '');
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-  if (authError || !user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: corsHeaders,
-    });
-  }
-
-  // Get the user's Stripe customer ID
-  const { data: profile, error: profileError } = await supabase
-    .from('profiles')
-    .select('stripe_customer_id')
-    .eq('id', user.id)
-    .single();
-
-  if (profileError || !profile?.stripe_customer_id) {
-    return new Response(
-      JSON.stringify({ error: 'No billing account found. Please upgrade your plan first.' }),
-      { status: 400, headers: corsHeaders }
-    );
-  }
-
-  let body: { return_url?: string } = {};
   try {
-    body = await req.json();
-  } catch {
-    // body is optional
+    const sb = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Missing authorization' }), { status: 401, headers: jsonHeaders });
+    }
+
+    const { data: { user }, error: authError } = await sb.auth.getUser(authHeader.replace('Bearer ', ''));
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: jsonHeaders });
+    }
+
+    const { data: profile } = await sb.from('profiles')
+      .select('stripe_customer_id')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (!profile?.stripe_customer_id) {
+      return new Response(
+        JSON.stringify({ error: 'No billing account found. Please upgrade your plan first.' }),
+        { status: 400, headers: jsonHeaders }
+      );
+    }
+
+    const res = await fetch(`${PADDLE_API}/customers/${profile.stripe_customer_id}/portal-sessions`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('PADDLE_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({}),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      console.error('Paddle portal error:', JSON.stringify(data));
+      return new Response(
+        JSON.stringify({ error: 'Could not open billing portal' }),
+        { status: 400, headers: jsonHeaders }
+      );
+    }
+
+    return new Response(
+      JSON.stringify({ url: data.data.urls.general.overview }),
+      { status: 200, headers: jsonHeaders }
+    );
+  } catch (e) {
+    console.error('Portal error:', e);
+    return new Response(JSON.stringify({ error: e.message }), { status: 500, headers: jsonHeaders });
   }
-
-  const returnUrl = body.return_url || req.headers.get('origin') || 'https://buildflow.app';
-
-  // Create billing portal session
-  const portalSession = await stripe.billingPortal.sessions.create({
-    customer: profile.stripe_customer_id,
-    return_url: returnUrl,
-  });
-
-  return new Response(JSON.stringify({ url: portalSession.url }), {
-    status: 200,
-    headers: corsHeaders,
-  });
 });
