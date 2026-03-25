@@ -774,9 +774,9 @@ const app = {
 
   async startCheckout(priceId) {
     const {data,error} = await sb.functions.invoke('create-checkout-session',{
-      body:{price_id:priceId, success_url:window.location.href+'?upgraded=1', cancel_url:window.location.href}
+      body:{price_id:priceId}
     });
-    if(error) return alert('Checkout error: '+error.message);
+    if(error||data?.error) return alert('Checkout error: '+(data?.error||error?.message));
     if(data?.url) window.location.href = data.url;
   },
 

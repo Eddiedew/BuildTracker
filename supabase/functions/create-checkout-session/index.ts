@@ -64,10 +64,11 @@ Deno.serve(async (req: Request) => {
     const data = await res.json();
 
     if (!res.ok) {
-      console.error('Paddle error:', JSON.stringify(data));
+      const detail = data.error?.detail || data.error?.type || JSON.stringify(data);
+      console.error('Paddle error:', detail);
       return new Response(
-        JSON.stringify({ error: data.error?.detail || 'Paddle checkout error' }),
-        { status: 400, headers: jsonHeaders }
+        JSON.stringify({ error: detail }),
+        { status: 200, headers: jsonHeaders }
       );
     }
 
