@@ -1659,15 +1659,38 @@ const app = {
       return;
     }
 
-    const start = new Date(p.startDate || allDates[0]);
-    const end = new Date(p.deadline || allDates[allDates.length-1]);
-    const totalDays = Math.max(Math.ceil((end - start) / 86400000), 1);
+    const zoom = this.ganttZoom || 'month';
+    const rawStart = new Date(p.startDate || allDates[0]);
+    const rawEnd = new Date(p.deadline || allDates[allDates.length-1]);
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
+
+    // Each zoom level shows a different time window so bars actually scale
+    let start, end;
+    if(zoom === 'week') {
+      // 12-week window; centre on today if today falls inside the project
+      if(today >= rawStart && today <= rawEnd) {
+        start = new Date(today); start.setDate(start.getDate() - 14);
+        end   = new Date(today); end.setDate(end.getDate() + 70);
+      } else {
+        start = new Date(rawStart);
+        end   = new Date(rawStart); end.setDate(end.getDate() + 83);
+      }
+    } else if(zoom === 'quarter') {
+      // Snap to quarter boundaries, minimum 1 year shown
+      start = new Date(rawStart.getFullYear(), Math.floor(rawStart.getMonth()/3)*3, 1);
+      end   = new Date(rawEnd.getFullYear(), Math.floor(rawEnd.getMonth()/3)*3+3, 0);
+      const minEnd = new Date(start); minEnd.setFullYear(minEnd.getFullYear()+1);
+      if(end < minEnd) end = minEnd;
+    } else {
+      start = rawStart;
+      end   = rawEnd;
+    }
+
+    const totalDays = Math.max(Math.ceil((end - start) / 86400000), 1);
     const todayPct = Math.min(100, Math.max(0, (today - start) / 86400000 / totalDays * 100));
 
-    // Build header ticks based on zoom level
-    const zoom = this.ganttZoom || 'month';
+    // Build header ticks for the chosen zoom window
     const ticks = [];
     if(zoom === 'week') {
       let wcur = new Date(start);
@@ -1679,7 +1702,7 @@ const app = {
         wcur = new Date(wcur.getTime()+7*86400000);
       }
     } else if(zoom === 'quarter') {
-      let qcur = new Date(start.getFullYear(), Math.floor(start.getMonth()/3)*3, 1);
+      let qcur = new Date(start);
       while(qcur <= end) {
         const qS = new Date(Math.max(qcur, start));
         const qE = new Date(Math.min(new Date(qcur.getFullYear(), qcur.getMonth()+3, 0), end));
