@@ -1065,6 +1065,15 @@ const app = {
     return `<span class="badge ${map[status]||'badge-gray'}">${status}</span>`;
   },
 
+  async setProjectStatus(id, status) {
+    const p = this.data.projects.find(x=>x.id===id);
+    if(!p || p.status===status) return;
+    const updated = await this.dbUpdate('projects', id, {status});
+    if(!updated) return;
+    p.status = status;
+    this.showProjectDetail(id);
+  },
+
   renderProjects() {
     const H = s => this.escapeHtml(s);
     const filterStatus = document.getElementById('filterStatus')?.value || '';
@@ -1550,9 +1559,11 @@ const app = {
     const logs = this.data.logs.filter(l=>l.projectId===pid);
 
     document.getElementById('detailProjectName').textContent = p.name;
+    const statusColors = {'Planning':'#3b82f6','In Progress':'#f59e0b','On Hold':'#6b7280','Completed':'#10b981'};
+    const statusOpts = ['Planning','In Progress','On Hold','Completed'].map(s=>`<option${s===p.status?' selected':''}>${s}</option>`).join('');
     document.getElementById('detailMeta').innerHTML = `
       <span><i class="fas fa-user"></i> ${c?H(c.name):'No client'}</span>
-      <span>${this.statusBadge(p.status)}</span>
+      <span><select onchange="app.setProjectStatus('${p.id}',this.value)" style="border:none;border-radius:12px;padding:.2rem .6rem;font-size:.78rem;font-weight:600;cursor:pointer;background:${statusColors[p.status]||'#6b7280'}20;color:${statusColors[p.status]||'#6b7280'}">${statusOpts}</select></span>
       <span><i class="fas fa-calendar"></i> ${p.startDate||'?'} → ${p.deadline||'TBD'}</span>
       ${p.description?`<span style="color:var(--text)">${H(p.description)}</span>`:''}
     `;
