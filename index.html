@@ -1641,14 +1641,21 @@ const app = {
   renderGantt(p, milestones, tasks) {
     const H = s => this.escapeHtml(s);
     const el = document.getElementById('detailGantt');
-    if(!p.startDate || !p.deadline) {
-      const missing = [!p.startDate&&'Start Date', !p.deadline&&'Deadline'].filter(Boolean).join(' and ');
-      el.innerHTML = `<p style="color:var(--text-light);padding:1rem"><i class="fas fa-info-circle"></i> Edit this project and set a <strong>${missing}</strong> to enable the Gantt chart.</p>`;
+    // Derive range from project dates, task due dates, and milestone dates
+    const allDates = [
+      ...tasks.map(t=>t.dueDate).filter(Boolean),
+      ...tasks.map(t=>t.startDate).filter(Boolean),
+      ...milestones.map(m=>m.date).filter(Boolean),
+      p.startDate, p.deadline
+    ].filter(Boolean).sort();
+
+    if(!allDates.length) {
+      el.innerHTML = `<p style="color:var(--text-light);padding:1rem"><i class="fas fa-info-circle"></i> Add tasks with due dates to see the Gantt chart.</p>`;
       return;
     }
 
-    const start = new Date(p.startDate);
-    const end = new Date(p.deadline);
+    const start = new Date(p.startDate || allDates[0]);
+    const end = new Date(p.deadline || allDates[allDates.length-1]);
     const totalDays = Math.max(Math.ceil((end - start) / 86400000), 1);
     const today = new Date();
     const todayPct = Math.min(100, Math.max(0, (today - start) / 86400000 / totalDays * 100));
