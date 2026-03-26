@@ -2133,17 +2133,19 @@ const app = {
       const t = this.data.tasks.find(x=>x.id===id);
       if(!t) { alert('Task not found — please refresh and try again.'); return; }
       try {
+        const progress = parseInt(document.getElementById('f_progress')?.value||'0',10)||0;
         const changes = {
           name: document.getElementById('f_taskname').value.trim()||t.name,
           projectId: document.getElementById('f_proj').value||t.projectId,
           startDate: document.getElementById('f_start').value||null,
           dueDate: document.getElementById('f_due').value||null,
           assignedTo: document.getElementById('f_assign').value||null,
-          progress: parseInt(document.getElementById('f_progress')?.value||'0',10)||0,
         };
         const updated = await this.dbUpdate('tasks', id, changes);
         if(!updated) return;
-        Object.assign(t, changes);
+        // Save progress via RPC to bypass PostgREST schema cache
+        await sb.rpc('set_task_progress', {p_task_id: id, p_progress: progress});
+        Object.assign(t, changes, {progress});
         this.closeModal(); this.render();
         if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
       } catch(e) { console.error('editTask error:', e); alert('Error saving task: '+(e?.message||String(e))); }
@@ -2277,8 +2279,11 @@ const app = {
     } else if(type==='task') {
       const name = document.getElementById('f_taskname').value.trim();
       if(!name) return;
-      const rec = await this.dbInsert('tasks',{name,projectId:this.currentProjectId||document.getElementById('f_proj').value,completed:false,startDate:document.getElementById('f_start').value||null,dueDate:document.getElementById('f_due').value||null,assignedTo:document.getElementById('f_assign').value||null,progress:parseInt(document.getElementById('f_progress')?.value||'0',10)||0});
+      const taskProgress = parseInt(document.getElementById('f_progress')?.value||'0',10)||0;
+      const rec = await this.dbInsert('tasks',{name,projectId:this.currentProjectId||document.getElementById('f_proj').value,completed:false,startDate:document.getElementById('f_start').value||null,dueDate:document.getElementById('f_due').value||null,assignedTo:document.getElementById('f_assign').value||null});
       if(!rec) return;
+      if(taskProgress > 0) await sb.rpc('set_task_progress', {p_task_id: rec.id, p_progress: taskProgress});
+      rec.progress = taskProgress;
       this.data.tasks.push(rec);
     } else if(type==='client') {
       const name = document.getElementById('f_cname').value.trim();
