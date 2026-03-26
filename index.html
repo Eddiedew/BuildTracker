@@ -1693,7 +1693,7 @@ const app = {
     </tr>`;
 
     // Milestone rows
-    milestones.forEach(m => {
+    milestones.filter(m => m.date).forEach(m => {
       const ms = new Date(m.date);
       const leftPct = Math.min(98, Math.max(0, (ms - start) / 86400000 / totalDays * 100));
       rows += `<tr>
@@ -2228,7 +2228,7 @@ const app = {
     } else if(type==='task') {
       const name = document.getElementById('f_taskname').value.trim();
       if(!name) return;
-      const rec = await this.dbInsert('tasks',{name,projectId:document.getElementById('f_proj').value,completed:false,startDate:document.getElementById('f_start').value||null,dueDate:document.getElementById('f_due').value||null,assignedTo:document.getElementById('f_assign').value||null});
+      const rec = await this.dbInsert('tasks',{name,projectId:this.currentProjectId||document.getElementById('f_proj').value,completed:false,startDate:document.getElementById('f_start').value||null,dueDate:document.getElementById('f_due').value||null,assignedTo:document.getElementById('f_assign').value||null});
       if(!rec) return;
       this.data.tasks.push(rec);
     } else if(type==='client') {
@@ -2257,7 +2257,7 @@ const app = {
     } else if(type==='milestone') {
       const name = document.getElementById('f_mname').value.trim();
       if(!name) return;
-      const rec = await this.dbInsert('milestones',{name,projectId:document.getElementById('f_mproj').value,date:document.getElementById('f_mdate').value||null,completed:false});
+      const rec = await this.dbInsert('milestones',{name,projectId:this.currentProjectId||document.getElementById('f_mproj').value,date:document.getElementById('f_mdate').value||null,completed:false});
       if(!rec) return;
       this.data.milestones.push(rec);
     } else if(type==='team') {
