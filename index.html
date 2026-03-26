@@ -1186,7 +1186,7 @@ const app = {
         <td>${m?`<span style="display:inline-flex;align-items:center;gap:.4rem"><span style="width:20px;height:20px;border-radius:50%;background:${m.color};display:inline-flex;align-items:center;justify-content:center;color:white;font-size:.6rem;font-weight:bold">${H(m.name[0])}</span>${H(m.name)}</span>`:'-'}</td>
         <td style="color:${isOverdue?'var(--danger)':'inherit'}">${t.dueDate||'-'}</td>
         <td>${this.statusBadge(t.completed?'Completed':'Pending')}</td>
-        <td><button class="action-btn action-btn-delete" onclick="app.deleteItem('tasks','${t.id}')"><i class="fas fa-trash"></i></button></td>
+        <td style="white-space:nowrap"><button class="action-btn" onclick="app.openEditTask('${t.id}')"><i class="fas fa-pencil-alt"></i></button><button class="action-btn action-btn-delete" onclick="app.deleteItem('tasks','${t.id}')"><i class="fas fa-trash"></i></button></td>
       </tr>`;
     });
     html += `</tbody></table></div></div>`;
@@ -1570,13 +1570,13 @@ const app = {
     `;
 
     document.getElementById('detailTasks').innerHTML = tasks.length
-      ? `<table class="data-table"><thead><tr><th>Task</th><th>Due</th><th>Status</th></tr></thead><tbody>`+
-        tasks.map(t=>`<tr><td><input type="checkbox" ${t.completed?'checked':''} onchange="app.toggleTask('${t.id}')"> ${H(t.name)}</td><td>${t.dueDate||'-'}</td><td>${this.statusBadge(t.completed?'Completed':'Pending')}</td></tr>`).join('')+
+      ? `<table class="data-table"><thead><tr><th>Task</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>`+
+        tasks.map(t=>`<tr><td><input type="checkbox" ${t.completed?'checked':''} onchange="app.toggleTask('${t.id}')"> ${H(t.name)}</td><td>${t.dueDate||'-'}</td><td>${this.statusBadge(t.completed?'Completed':'Pending')}</td><td style="white-space:nowrap"><button class="action-btn" onclick="app.openEditTask('${t.id}')"><i class="fas fa-pencil-alt"></i></button><button class="action-btn action-btn-delete" onclick="app.deleteItem('tasks','${t.id}')"><i class="fas fa-trash"></i></button></td></tr>`).join('')+
         `</tbody></table>`
       : `<div class="empty-state"><div class="es-icon"><i class="fas fa-tasks"></i></div><p>No tasks yet</p></div>`;
 
     document.getElementById('detailMilestones').innerHTML = milestones.length
-      ? `<div class="timeline">`+milestones.map(m=>`<div class="timeline-item ${m.completed?'completed':''}"><div class="timeline-date">${m.date}</div><div class="timeline-title">${H(m.name)} ${m.completed?'<span class="badge badge-success">Done</span>':''}</div></div>`).join('')+`</div>`
+      ? `<div class="timeline">`+milestones.map(m=>`<div class="timeline-item ${m.completed?'completed':''}"><div class="timeline-date">${m.date||'-'}</div><div class="timeline-title" style="display:flex;align-items:center;justify-content:space-between;gap:.5rem"><span>${H(m.name)} ${m.completed?'<span class="badge badge-success">Done</span>':''}</span><span style="white-space:nowrap;flex-shrink:0"><input type="checkbox" title="Mark complete" ${m.completed?'checked':''} onchange="app.toggleMilestone('${m.id}')" style="margin-right:.35rem"><button class="action-btn" onclick="app.openEditMilestone('${m.id}')"><i class="fas fa-pencil-alt"></i></button><button class="action-btn action-btn-delete" onclick="app.deleteItem('milestones','${m.id}')"><i class="fas fa-trash"></i></button></span></div></div>`).join('')+`</div>`
       : `<div class="empty-state"><div class="es-icon"><i class="fas fa-flag"></i></div><p>No milestones yet</p></div>`;
 
     this.renderGantt(p, milestones, tasks);
@@ -1961,6 +1961,11 @@ const app = {
       </div>`;
     document.getElementById('modalBody').innerHTML = html;
     if(type==='quote'||type==='invoice') this.addQuoteItem();
+    // Pre-select current project in task/milestone dropdowns
+    if(this.currentProjectId && (type==='task'||type==='milestone')) {
+      const sel = document.getElementById(type==='task'?'f_proj':'f_mproj');
+      if(sel) sel.value = this.currentProjectId;
+    }
     document.getElementById('modal').classList.add('active');
   },
 
@@ -2073,6 +2078,41 @@ const app = {
       return;
     }
 
+    if(type && type.startsWith('editTask_')) {
+      const id = type.replace('editTask_','');
+      const t = this.data.tasks.find(x=>x.id===id);
+      if(t) {
+        const changes = {
+          name: document.getElementById('f_taskname').value.trim()||t.name,
+          projectId: document.getElementById('f_proj').value,
+          dueDate: document.getElementById('f_due').value||null,
+          assignedTo: document.getElementById('f_assign').value||null,
+        };
+        const updated = await this.dbUpdate('tasks', id, changes);
+        if(!updated) return;
+        Object.assign(t, changes);
+        this.closeModal(); this.render();
+        if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+      }
+      return;
+    }
+    if(type && type.startsWith('editMilestone_')) {
+      const id = type.replace('editMilestone_','');
+      const m = this.data.milestones.find(x=>x.id===id);
+      if(m) {
+        const changes = {
+          name: document.getElementById('f_mname').value.trim()||m.name,
+          projectId: document.getElementById('f_mproj').value,
+          date: document.getElementById('f_mdate').value||null,
+        };
+        const updated = await this.dbUpdate('milestones', id, changes);
+        if(!updated) return;
+        Object.assign(m, changes);
+        this.closeModal(); this.render();
+        if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+      }
+      return;
+    }
     if(type==='email') {
       alert('Email sent to: ' + (document.getElementById('emailTo')?.value||''));
       this.closeModal(); return;
@@ -2271,6 +2311,45 @@ const app = {
     document.getElementById('modal').classList.add('active');
   },
 
+  openEditTask(id) {
+    const H = s => this.escapeHtml(s);
+    const t = this.data.tasks.find(x=>x.id===id);
+    if(!t) return;
+    this.currentModal = 'editTask_'+id;
+    document.getElementById('modalTitle').textContent = 'Edit Task';
+    document.getElementById('modalSaveBtn').textContent = 'Update';
+    document.getElementById('modalFooter').style.display = 'flex';
+    document.getElementById('modalBox').className = 'modal';
+    const projOpts = this.data.projects.map(p=>`<option value="${p.id}"${p.id===t.projectId?' selected':''}>${H(p.name)}</option>`).join('');
+    const teamOpts = `<option value="">Unassigned</option>`+this.data.team.map(m=>`<option value="${m.id}"${m.id===t.assignedTo?' selected':''}>${H(m.name)}</option>`).join('');
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-group"><label>Task Name</label><input id="f_taskname" value="${H(t.name)}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Project</label><select id="f_proj">${projOpts}</select></div>
+        <div class="form-group"><label>Due Date</label><input type="date" id="f_due" value="${t.dueDate||''}"></div>
+      </div>
+      <div class="form-group"><label>Assign To</label><select id="f_assign">${teamOpts}</select></div>`;
+    document.getElementById('modal').classList.add('active');
+  },
+
+  openEditMilestone(id) {
+    const H = s => this.escapeHtml(s);
+    const m = this.data.milestones.find(x=>x.id===id);
+    if(!m) return;
+    this.currentModal = 'editMilestone_'+id;
+    document.getElementById('modalTitle').textContent = 'Edit Milestone';
+    document.getElementById('modalSaveBtn').textContent = 'Update';
+    document.getElementById('modalFooter').style.display = 'flex';
+    document.getElementById('modalBox').className = 'modal';
+    const projOpts = this.data.projects.map(p=>`<option value="${p.id}"${p.id===m.projectId?' selected':''}>${H(p.name)}</option>`).join('');
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-group"><label>Milestone Name</label><input id="f_mname" value="${H(m.name)}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Project</label><select id="f_mproj">${projOpts}</select></div>
+        <div class="form-group"><label>Target Date</label><input type="date" id="f_mdate" value="${m.date||''}"></div>
+      </div>`;
+    document.getElementById('modal').classList.add('active');
+  },
 
   async addCategory() {
     const nameEl = document.getElementById('budgetCatName');
