@@ -2083,10 +2083,11 @@ const app = {
     if(type && type.startsWith('editTask_')) {
       const id = type.replace('editTask_','');
       const t = this.data.tasks.find(x=>x.id===id);
-      if(t) {
+      if(!t) { alert('Task not found — please refresh and try again.'); return; }
+      try {
         const changes = {
           name: document.getElementById('f_taskname').value.trim()||t.name,
-          projectId: document.getElementById('f_proj').value,
+          projectId: document.getElementById('f_proj').value||t.projectId,
           startDate: document.getElementById('f_start').value||null,
           dueDate: document.getElementById('f_due').value||null,
           assignedTo: document.getElementById('f_assign').value||null,
@@ -2096,7 +2097,7 @@ const app = {
         Object.assign(t, changes);
         this.closeModal(); this.render();
         if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
-      }
+      } catch(e) { console.error('editTask error:', e); alert('Error saving task: '+(e?.message||String(e))); }
       return;
     }
     if(type && type.startsWith('editMilestone_')) {
@@ -2321,6 +2322,7 @@ const app = {
     this.currentModal = 'editTask_'+id;
     document.getElementById('modalTitle').textContent = 'Edit Task';
     document.getElementById('modalSaveBtn').textContent = 'Update';
+    document.getElementById('modalSaveBtn').style.display = '';
     document.getElementById('modalFooter').style.display = 'flex';
     document.getElementById('modalBox').className = 'modal';
     const projOpts = this.data.projects.map(p=>`<option value="${p.id}"${p.id===t.projectId?' selected':''}>${H(p.name)}</option>`).join('');
@@ -2343,6 +2345,7 @@ const app = {
     this.currentModal = 'editMilestone_'+id;
     document.getElementById('modalTitle').textContent = 'Edit Milestone';
     document.getElementById('modalSaveBtn').textContent = 'Update';
+    document.getElementById('modalSaveBtn').style.display = '';
     document.getElementById('modalFooter').style.display = 'flex';
     document.getElementById('modalBox').className = 'modal';
     const projOpts = this.data.projects.map(p=>`<option value="${p.id}"${p.id===m.projectId?' selected':''}>${H(p.name)}</option>`).join('');
