@@ -1059,7 +1059,7 @@ const app = {
   statusBadge(status) {
     const map = {
       'Completed':'badge-success','In Progress':'badge-warning','Planning':'badge-info',
-      'Accepted':'badge-success','Rejected':'badge-danger','Pending':'badge-warning',
+      'Accepted':'badge-success','Rejected':'badge-danger','Pending':'badge-warning','Converted':'badge-info',
       'Paid':'badge-success','Overdue':'badge-danger','Done':'badge-success'
     };
     return `<span class="badge ${map[status]||'badge-gray'}">${status}</span>`;
@@ -1255,10 +1255,10 @@ const app = {
         <td><strong>${this.fmt(amt)}</strong></td><td>${q.date}</td>
         <td>${this.statusBadge(q.status)}</td>
         <td>
-          <button class="action-btn action-btn-edit" onclick="app.viewDoc('quote','${q.id}'" title="View"><i class="fas fa-eye"></i></button>
+          <button class="action-btn action-btn-edit" onclick="app.viewDoc('quote','${q.id}')" title="View"><i class="fas fa-eye"></i></button>
           <button class="action-btn action-btn-edit" onclick="app.openEditQuote('${q.id}')" title="Edit"><i class="fas fa-edit"></i></button>
           ${q.status==='Accepted'?`<button class="action-btn" onclick="app.convertToInvoice('${q.id}')" title="Convert to Invoice" style="background:#d1fae5;color:#065f46"><i class="fas fa-file-invoice-dollar"></i></button>`:''}
-          <button class="action-btn action-btn-email" onclick="app.emailDoc('quote','${q.id}'" title="Send Email"><i class="fas fa-envelope"></i></button>
+          <button class="action-btn action-btn-email" onclick="app.emailDoc('quote','${q.id}')" title="Send Email"><i class="fas fa-envelope"></i></button>
           <button class="action-btn action-btn-delete" onclick="app.deleteItem('quotes','${q.id}')"><i class="fas fa-trash"></i></button>
         </td>
       </tr>`;
@@ -1270,7 +1270,7 @@ const app = {
   renderInvoices() {
     const H = s => this.escapeHtml(s);
     const today = new Date().toISOString().split('T')[0];
-    this.data.invoices.forEach(i => { if(i.status==='Pending'&&i.dueDate&&i.dueDate<today) i.status='Overdue'; });
+    this.data.invoices.forEach(i => { if(i.status==='Pending'&&i.dueDate&&i.dueDate<today) { i.status='Overdue'; this.dbUpdate('invoices',i.id,{status:'Overdue'}); } });
     const filterStatus = document.getElementById('filterInvStatus')?.value || '';
     const search = (document.getElementById('searchInvoices')?.value||'').toLowerCase();
     let invoices = this.data.invoices.filter(i => {
@@ -1313,10 +1313,10 @@ const app = {
         <td style="color:${i.status==='Overdue'?'var(--danger)':'inherit'}">${i.dueDate||'-'}</td>
         <td>${this.statusBadge(i.status)}</td>
         <td>
-          <button class="action-btn action-btn-edit" onclick="app.viewDoc('invoice','${i.id}'" title="View"><i class="fas fa-eye"></i></button>
+          <button class="action-btn action-btn-edit" onclick="app.viewDoc('invoice','${i.id}')" title="View"><i class="fas fa-eye"></i></button>
           <button class="action-btn action-btn-edit" onclick="app.openEditInvoice('${i.id}')" title="Edit"><i class="fas fa-edit"></i></button>
           ${i.status!=='Paid'?`<button class="action-btn" onclick="app.markPaid('${i.id}')" title="Mark as Paid" style="background:#d1fae5;color:#065f46"><i class="fas fa-check"></i></button>`:''}
-          <button class="action-btn action-btn-email" onclick="app.emailDoc('invoice','${i.id}'" title="Send Email"><i class="fas fa-envelope"></i></button>
+          <button class="action-btn action-btn-email" onclick="app.emailDoc('invoice','${i.id}')" title="Send Email"><i class="fas fa-envelope"></i></button>
           <button class="action-btn action-btn-delete" onclick="app.deleteItem('invoices','${i.id}')"><i class="fas fa-trash"></i></button>
         </td>
       </tr>`;
@@ -1419,11 +1419,12 @@ const app = {
       <div class="card-body">
         <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem" id="catChips">
           ${this.getCats().map(c=>`
-            <div style="display:inline-flex;align-items:center;gap:.45rem;background:#f9fafb;border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.82rem">
+            <div id="cat_${c.id}" style="display:inline-flex;align-items:center;gap:.45rem;background:#f9fafb;border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.82rem">
               <span style="width:10px;height:10px;border-radius:2px;background:${c.color};flex-shrink:0"></span>
               <span style="font-weight:500">${H(c.name)}</span>
               ${c.isDefault?'<span style="font-size:.65rem;color:var(--text-light);margin-left:.15rem">(default)</span>':''}
               ${inUse.has(c.name)?'<span style="font-size:.65rem;color:#1565c0;margin-left:.1rem">●</span>':''}
+              <button onclick="app.editCategory('${c.id}')" title="Edit category" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:.75rem;line-height:1;padding:0 .1rem" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#9ca3af'"><i class="fas fa-pen"></i></button>
               <button onclick="app.deleteCategory('${c.name.replace(/'/g,"\\'")}')" title="Delete category" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:.9rem;line-height:1;padding:0 .1rem;margin-left:.1rem" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#9ca3af'">✕</button>
             </div>`).join('')}
           ${this.getCats().length===0?'<p style="color:var(--text-light);font-size:.85rem">No categories yet.</p>':''}
@@ -1459,7 +1460,10 @@ const app = {
         <td><a href="mailto:${H(c.email)}" style="color:var(--secondary)">${H(c.email)}</a></td>
         <td>${H(c.phone)}</td>
         <td><span class="badge badge-info">${projCount} project${projCount!==1?'s':''}</span></td>
-        <td><button class="action-btn action-btn-delete" onclick="app.deleteItem('clients','${c.id}')"><i class="fas fa-trash"></i></button></td>
+        <td>
+          <button class="action-btn action-btn-edit" onclick="app.openEditClient('${c.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+          <button class="action-btn action-btn-delete" onclick="app.deleteItem('clients','${c.id}')"><i class="fas fa-trash"></i></button>
+        </td>
       </tr>`;
     });
     html += `</tbody></table></div></div>`;
@@ -1479,7 +1483,10 @@ const app = {
         <td>${wIcons[l.weather]||''} ${H(l.weather)}</td>
         <td>${l.crew||'-'}</td>
         <td style="max-width:300px">${H(l.notes)}</td>
-        <td><button class="action-btn action-btn-delete" onclick="app.deleteItem('logs','${l.id}')"><i class="fas fa-trash"></i></button></td>
+        <td>
+          <button class="action-btn action-btn-edit" onclick="app.openEditLog('${l.id}')" title="Edit"><i class="fas fa-edit"></i></button>
+          <button class="action-btn action-btn-delete" onclick="app.deleteItem('logs','${l.id}')"><i class="fas fa-trash"></i></button>
+        </td>
       </tr>`;
     });
     html += `</tbody></table></div></div>`;
@@ -2174,12 +2181,11 @@ const app = {
           startDate: document.getElementById('f_start').value||null,
           dueDate: document.getElementById('f_due').value||null,
           assignedTo: document.getElementById('f_assign').value||null,
+          progress,
         };
         const updated = await this.dbUpdate('tasks', id, changes);
         if(!updated) return;
-        // Save progress via RPC to bypass PostgREST schema cache
-        await sb.rpc('set_task_progress', {p_task_id: id, p_progress: progress});
-        Object.assign(t, changes, {progress});
+        Object.assign(t, changes);
         this.closeModal(); this.render();
         if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
       } catch(e) { console.error('editTask error:', e); alert('Error saving task: '+(e?.message||String(e))); }
@@ -2199,6 +2205,41 @@ const app = {
         Object.assign(m, changes);
         this.closeModal(); this.render();
         if(this.currentProjectId) this.showProjectDetail(this.currentProjectId);
+      }
+      return;
+    }
+    if(type && type.startsWith('editClient_')) {
+      const id = type.replace('editClient_','');
+      const c = this.data.clients.find(x=>x.id===id);
+      if(c) {
+        const changes = {
+          name: document.getElementById('f_cname').value.trim()||c.name,
+          company: document.getElementById('f_company').value,
+          email: document.getElementById('f_email').value,
+          phone: document.getElementById('f_phone').value,
+        };
+        const updated = await this.dbUpdate('clients', id, changes);
+        if(!updated) return;
+        Object.assign(c, changes);
+        this.closeModal(); this.render();
+      }
+      return;
+    }
+    if(type && type.startsWith('editLog_')) {
+      const id = type.replace('editLog_','');
+      const l = this.data.logs.find(x=>x.id===id);
+      if(l) {
+        const changes = {
+          projectId: document.getElementById('f_lproj').value||null,
+          date: document.getElementById('f_ldate').value,
+          weather: document.getElementById('f_weather').value,
+          crew: parseInt(document.getElementById('f_crew').value)||null,
+          notes: document.getElementById('f_notes').value,
+        };
+        const updated = await this.dbUpdate('daily_logs', id, changes);
+        if(!updated) return;
+        Object.assign(l, changes);
+        this.closeModal(); this.render();
       }
       return;
     }
@@ -2314,10 +2355,8 @@ const app = {
       const name = document.getElementById('f_taskname').value.trim();
       if(!name) return;
       const taskProgress = parseInt(document.getElementById('f_progress')?.value||'0',10)||0;
-      const rec = await this.dbInsert('tasks',{name,projectId:this.currentProjectId||document.getElementById('f_proj').value,completed:false,startDate:document.getElementById('f_start').value||null,dueDate:document.getElementById('f_due').value||null,assignedTo:document.getElementById('f_assign').value||null});
+      const rec = await this.dbInsert('tasks',{name,projectId:this.currentProjectId||document.getElementById('f_proj').value,completed:false,startDate:document.getElementById('f_start').value||null,dueDate:document.getElementById('f_due').value||null,assignedTo:document.getElementById('f_assign').value||null,progress:taskProgress});
       if(!rec) return;
-      if(taskProgress > 0) await sb.rpc('set_task_progress', {p_task_id: rec.id, p_progress: taskProgress});
-      rec.progress = taskProgress;
       this.data.tasks.push(rec);
     } else if(type==='client') {
       const name = document.getElementById('f_cname').value.trim();
@@ -2403,6 +2442,51 @@ const app = {
     document.getElementById('modal').classList.add('active');
   },
 
+  openEditClient(id) {
+    const H = s => this.escapeHtml(s);
+    const c = this.data.clients.find(x=>x.id===id);
+    if(!c) return;
+    this.currentModal = 'editClient_'+id;
+    document.getElementById('modalTitle').textContent = 'Edit Client';
+    document.getElementById('modalBox').className = 'modal';
+    document.getElementById('modalSaveBtn').textContent = 'Update Client';
+    document.getElementById('modalSaveBtn').style.display = '';
+    document.getElementById('modalFooter').style.display = 'flex';
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-group"><label>Full Name</label><input id="f_cname" value="${H(c.name)}"></div>
+      <div class="form-group"><label>Company</label><input id="f_company" value="${H(c.company||'')}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" id="f_email" value="${H(c.email||'')}"></div>
+        <div class="form-group"><label>Phone</label><input id="f_phone" value="${H(c.phone||'')}"></div>
+      </div>`;
+    document.getElementById('modal').classList.add('active');
+  },
+
+  openEditLog(id) {
+    const H = s => this.escapeHtml(s);
+    const l = this.data.logs.find(x=>x.id===id);
+    if(!l) return;
+    const p = this.data.projects;
+    this.currentModal = 'editLog_'+id;
+    document.getElementById('modalTitle').textContent = 'Edit Daily Log';
+    document.getElementById('modalBox').className = 'modal';
+    document.getElementById('modalSaveBtn').textContent = 'Update Log';
+    document.getElementById('modalSaveBtn').style.display = '';
+    document.getElementById('modalFooter').style.display = 'flex';
+    const projOpts = `<option value="">General</option>`+p.map(x=>`<option value="${x.id}"${x.id===l.projectId?' selected':''}>${H(x.name)}</option>`).join('');
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-row">
+        <div class="form-group"><label>Project</label><select id="f_lproj">${projOpts}</select></div>
+        <div class="form-group"><label>Date</label><input type="date" id="f_ldate" value="${l.date||''}"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Weather</label><select id="f_weather">${['Sunny','Cloudy','Rainy','Windy','Stormy'].map(w=>`<option${w===l.weather?' selected':''}>${w}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Crew Size</label><input type="number" id="f_crew" value="${l.crew||''}" min="0"></div>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="f_notes">${H(l.notes||'')}</textarea></div>`;
+    document.getElementById('modal').classList.add('active');
+  },
+
   openEditTask(id) {
     const H = s => this.escapeHtml(s);
     const t = this.data.tasks.find(x=>x.id===id);
@@ -2473,6 +2557,43 @@ const app = {
       if(!ok) return;
     }
     this.data.expenseCategories = this.getCats().filter(c=>c.name!==name);
+    this.renderBudget();
+  },
+
+  editCategory(id) {
+    const H = s => this.escapeHtml(s);
+    const cat = this.getCats().find(c => c.id === id);
+    if(!cat) return;
+    const chip = document.getElementById('cat_' + id);
+    if(!chip) return;
+    chip.style.borderRadius = '8px';
+    chip.innerHTML = `
+      <input id="catEditName_${id}" value="${H(cat.name)}" style="height:28px;padding:.2rem .5rem;border:1px solid var(--border);border-radius:4px;font-size:.82rem;width:120px">
+      <input type="color" id="catEditColor_${id}" value="${cat.color}" style="width:28px;height:28px;padding:1px 2px;border-radius:4px;border:1px solid var(--border);cursor:pointer">
+      <button onclick="app.saveEditCategory('${id}','${H(cat.name)}')" class="btn btn-primary btn-sm" style="height:28px;padding:.15rem .6rem;font-size:.78rem">Save</button>
+      <button onclick="app.renderBudget()" class="btn btn-secondary btn-sm" style="height:28px;padding:.15rem .5rem;font-size:.78rem">✕</button>
+    `;
+    document.getElementById('catEditName_' + id)?.focus();
+  },
+
+  async saveEditCategory(id, oldName) {
+    const newName = (document.getElementById('catEditName_' + id)?.value || '').trim();
+    const newColor = document.getElementById('catEditColor_' + id)?.value || '#6b7280';
+    if(!newName) { alert('Category name cannot be empty.'); return; }
+    if(newName !== oldName && this.getCats().find(c => c.name.toLowerCase() === newName.toLowerCase() && c.id !== id)) {
+      alert('A category with this name already exists.'); return;
+    }
+    const updated = await this.dbUpdate('expense_categories', id, {name: newName, color: newColor});
+    if(!updated) return;
+    if(newName !== oldName) {
+      const affected = (this.data.expenses || []).filter(e => e.type === oldName);
+      for(const exp of affected) {
+        await this.dbUpdate('expenses', exp.id, {type: newName});
+        exp.type = newName;
+      }
+    }
+    const cat = this.getCats().find(c => c.id === id);
+    if(cat) { cat.name = newName; cat.color = newColor; }
     this.renderBudget();
   },
 
@@ -2588,7 +2709,7 @@ const app = {
           </div>
         </div>
         <div style="padding:.65rem 1.25rem;background:var(--bg);border-top:1px solid var(--border);font-size:.75rem;color:var(--text-light)">
-          ${type==='quote'?'<i class="fas fa-info-circle"></i> This quote is valid for 30 days. To accept, please contact admin@buildtracker.co.za.':'<i class="fas fa-info-circle"></i> Please use the invoice number as your payment reference. Late payments may incur interest.'}
+          ${type==='quote'?`<i class="fas fa-info-circle"></i> This quote is valid for 30 days. To accept, please contact ${this.escapeHtml(this.currentEmail||'us')}.`:'<i class="fas fa-info-circle"></i> Please use the invoice number as your payment reference. Late payments may incur interest.'}
         </div>
       </div>`;
     document.getElementById('modal').classList.add('active');
@@ -2611,7 +2732,7 @@ const app = {
         <div class="form-group"><label>Project</label><select id="f_qproj"><option value="">None</option>${projOpts}</select></div>
       </div>
       <div class="form-row">
-        <div class="form-group"><label>Status</label><select id="f_qstatus">${['Pending','Accepted','Rejected'].map(s=>`<option${s===q.status?' selected':''}>${s}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Status</label><select id="f_qstatus">${['Pending','Accepted','Rejected','Converted'].map(s=>`<option${s===q.status?' selected':''}>${s}</option>`).join('')}</select></div>
         <div class="form-group"><label>Date</label><input type="date" id="f_qdate" value="${q.date||''}"></div>
       </div>
       <div id="quoteItems"></div>
@@ -2674,8 +2795,8 @@ const app = {
     });
     if(!rec) return;
     this.data.invoices.push(rec);
-    const upd = await this.dbUpdate('quotes', quoteId, {status:'Accepted'});
-    if(upd) { const qi = this.data.quotes.findIndex(x=>x.id===quoteId); if(qi>-1) this.data.quotes[qi].status='Accepted'; }
+    const upd = await this.dbUpdate('quotes', quoteId, {status:'Converted'});
+    if(upd) { const qi = this.data.quotes.findIndex(x=>x.id===quoteId); if(qi>-1) this.data.quotes[qi].status='Converted'; }
     this.render();
     document.querySelectorAll('.nav-tab').forEach(x=>x.classList.remove('active'));
     document.querySelectorAll('.content-section').forEach(x=>x.classList.remove('active'));
@@ -2707,7 +2828,10 @@ const app = {
       <div class="form-group"><label>Message Preview</label><div class="email-preview">${H(emailText)}</div></div>
       <p style="font-size:.8rem;color:var(--text-light);margin-top:.5rem"><i class="fas fa-info-circle"></i> In production, this would send via your connected email service.</p>
     `;
+    document.getElementById('modalBox').className = 'modal';
     document.getElementById('modalSaveBtn').textContent = 'Send Email';
+    document.getElementById('modalSaveBtn').style.display = '';
+    document.getElementById('modalFooter').style.display = 'flex';
     this.currentModal = 'email';
     document.getElementById('modal').classList.add('active');
   },
