@@ -1553,7 +1553,10 @@ const app = {
         <div style="font-size:.78rem;color:var(--text-light)">${H(m.phone)}</div>
         <div style="margin-top:.6rem;font-size:.78rem;color:var(--primary)">${done}/${assigned} tasks done</div>
         ${assigned?`<div class="progress-bar" style="margin-top:.3rem"><div class="progress-fill" style="width:${assigned?Math.round(done/assigned*100):0}%"></div></div>`:''}
-        <button class="action-btn action-btn-delete" style="margin-top:.75rem" onclick="app.deleteItem('team','${m.id}')"><i class="fas fa-trash"></i> Remove</button>
+        <div style="display:flex;gap:.5rem;margin-top:.75rem">
+          <button class="action-btn action-btn-edit" style="flex:1" onclick="app.openEditTeam('${m.id}')"><i class="fas fa-edit"></i> Edit</button>
+          <button class="action-btn action-btn-delete" style="flex:1" onclick="app.deleteItem('team','${m.id}')"><i class="fas fa-trash"></i> Remove</button>
+        </div>
       </div>`;
     });
     html += `</div>`;
@@ -1568,7 +1571,6 @@ const app = {
     const c = this.data.clients.find(x=>x.id===p.clientId);
     const tasks = this.data.tasks.filter(t=>t.projectId===pid);
     const milestones = this.data.milestones.filter(m=>m.projectId===pid);
-    console.log('[Gantt debug] project:', p.name, '| startDate:', p.startDate, '| deadline:', p.deadline, '| tasks:', tasks.length, '| tasks with dueDate:', tasks.filter(t=>t.dueDate).length, '| milestones:', milestones.length);
     const quotes = this.data.quotes.filter(q=>q.projectId===pid);
     const invoices = this.data.invoices.filter(i=>i.projectId===pid);
     const logs = this.data.logs.filter(l=>l.projectId===pid);
@@ -2251,6 +2253,23 @@ const app = {
       }
       return;
     }
+    if(type && type.startsWith('editTeam_')) {
+      const id = type.replace('editTeam_','');
+      const m = this.data.team.find(x=>x.id===id);
+      if(m) {
+        const changes = {
+          name: (document.getElementById('f_tname').value||'').trim()||m.name,
+          role: document.getElementById('f_trole').value,
+          email: document.getElementById('f_temail').value,
+          phone: document.getElementById('f_tphone').value,
+        };
+        const updated = await this.dbUpdate('team_members', id, changes);
+        if(!updated) return;
+        Object.assign(m, changes);
+        this.closeModal(); this.render();
+      }
+      return;
+    }
     if(type==='email') {
       alert('Email sent to: ' + (document.getElementById('emailTo')?.value||''));
       this.closeModal(); return;
@@ -2492,6 +2511,26 @@ const app = {
         <div class="form-group"><label>Crew Size</label><input type="number" id="f_crew" value="${l.crew||''}" min="0"></div>
       </div>
       <div class="form-group"><label>Notes</label><textarea id="f_notes">${H(l.notes||'')}</textarea></div>`;
+    document.getElementById('modal').classList.add('active');
+  },
+
+  openEditTeam(id) {
+    const H = s => this.escapeHtml(s);
+    const m = this.data.team.find(x=>x.id===id);
+    if(!m) return;
+    this.currentModal = 'editTeam_'+id;
+    document.getElementById('modalTitle').textContent = 'Edit Team Member';
+    document.getElementById('modalBox').className = 'modal';
+    document.getElementById('modalSaveBtn').textContent = 'Update Member';
+    document.getElementById('modalSaveBtn').style.display = '';
+    document.getElementById('modalFooter').style.display = 'flex';
+    document.getElementById('modalBody').innerHTML = `
+      <div class="form-group"><label>Full Name</label><input id="f_tname" value="${H(m.name)}"></div>
+      <div class="form-group"><label>Role</label><input id="f_trole" value="${H(m.role||'')}"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Email</label><input type="email" id="f_temail" value="${H(m.email||'')}"></div>
+        <div class="form-group"><label>Phone</label><input id="f_tphone" value="${H(m.phone||'')}"></div>
+      </div>`;
     document.getElementById('modal').classList.add('active');
   },
 
@@ -2874,14 +2913,38 @@ const app = {
         try {
           const imported = JSON.parse(ev.target.result);
           if(!imported.projects||!imported.clients) { alert('Invalid backup file.'); return; }
-          if(!confirm('This will replace ALL current data with the backup. Continue?')) return;
-          this.data = imported;
-          if(!this.data.expenseCategories) this.data.expenseCategories = this.defaultData().expenseCategories;
-          if(!this.data.expenses) this.data.expenses = [];
-          // Reload from Supabase after any import
+          if(!confirm('This will replace ALL your current data with the backup. This cannot be undone. Continue?')) return;
+          const uid = this.currentUserId;
+          if(!uid) { alert('Not logged in.'); return; }
+          // Delete in FK-safe order (children first)
+          const deleteOrder = ['milestones','tasks','expenses','daily_logs','quotes','invoices','documents','team_members','expense_categories','clients','projects'];
+          for(const table of deleteOrder) {
+            const {error} = await sb.from(table).delete().eq('owner_id', uid);
+            if(error) { console.error('Delete error on', table, error); alert('Import failed while clearing '+table+': '+error.message); return; }
+          }
+          // Insert in FK-safe order (parents first), preserving original IDs
+          const insertOrder = [
+            ['projects', imported.projects||[]],
+            ['clients', imported.clients||[]],
+            ['expense_categories', imported.expenseCategories||[]],
+            ['tasks', imported.tasks||[]],
+            ['milestones', imported.milestones||[]],
+            ['expenses', imported.expenses||[]],
+            ['daily_logs', imported.logs||[]],
+            ['quotes', imported.quotes||[]],
+            ['invoices', imported.invoices||[]],
+            ['documents', imported.documents||[]],
+            ['team_members', imported.team||[]],
+          ];
+          for(const [table, records] of insertOrder) {
+            if(!records.length) continue;
+            const rows = records.map(r => ({...r, owner_id: uid}));
+            const {error} = await sb.from(table).insert(rows);
+            if(error) { console.error('Insert error on', table, error); alert('Import failed while inserting '+table+': '+error.message); return; }
+          }
           await this.load();
           this.render();
-          alert('Data restored. Note: Full import from backup requires data to be in Supabase format.');
+          alert('Data imported successfully!');
         } catch(err) { alert('Could not read file. Please select a valid BuildTracker backup.'); }
       };
       reader.readAsText(file);
