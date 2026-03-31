@@ -820,12 +820,12 @@ const app = {
     if(localStorage.getItem('buildtracker_dark')==='1') this.applyDark(true);
 
     this._loginInProgress = false;
+    this._loadStarted = false;
 
     sb.auth.onAuthStateChange(async (event, session) => {
       if(this._loginInProgress) return;
-      // Ignore INITIAL_SESSION — handled by getSession() below to avoid double load
-      if(event === 'INITIAL_SESSION') return;
-      if(session && !this.currentUserId) {
+      if(session && !this._loadStarted) {
+        this._loadStarted = true;
         this.currentUserId = session.user.id;
         this.currentEmail = session.user.email;
         this.currentUser = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
@@ -841,6 +841,7 @@ const app = {
           alert('Plan upgraded! Welcome to BuildTracker '+(PLAN_LIMITS[this.userPlan]?.label||'Pro')+'.');
         }
       } else if(event === 'SIGNED_OUT') {
+        this._loadStarted = false;
         this.currentUserId = null;
         this.currentUser = null;
         this.currentEmail = null;
@@ -851,9 +852,10 @@ const app = {
       }
     });
 
-    // Check session on page load — show loading screen until we know
+    // Check session on page load — fallback if onAuthStateChange doesn't fire
     sb.auth.getSession().then(async ({ data: { session } }) => {
-      if(session && !this.currentUserId) {
+      if(session && !this._loadStarted) {
+        this._loadStarted = true;
         this.currentUserId = session.user.id;
         this.currentEmail = session.user.email;
         this.currentUser = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
@@ -864,7 +866,7 @@ const app = {
         document.getElementById('currency').value = this.currency;
         document.getElementById('loadingScreen').classList.add('hidden');
         this.showApp();
-      } else if(!this.currentUserId) {
+      } else if(!this._loadStarted) {
         document.getElementById('loadingScreen').classList.add('hidden');
         document.getElementById('landing').classList.add('active');
       }
