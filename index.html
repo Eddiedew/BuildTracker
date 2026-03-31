@@ -1440,11 +1440,11 @@ const app = {
           ${this.getCats().length===0?'<p style="color:var(--text-light);font-size:.85rem">No categories yet.</p>':''}
         </div>
         <div style="border-top:1px solid var(--border);padding-top:.9rem">
-          <label style="font-weight:600;font-size:.83rem;display:block;margin-bottom:.5rem"><i class="fas fa-plus-circle" style="color:var(--primary)"></i> Add New Category</label>
+          <label for="budgetCatName" style="font-weight:600;font-size:.83rem;display:block;margin-bottom:.5rem"><i class="fas fa-plus-circle" style="color:var(--primary)"></i> Add New Category</label>
           <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
             <input id="budgetCatName" class="search-input" style="flex:1;min-width:180px" placeholder="Category name (e.g. Consultants, Safety)">
             <div style="display:flex;align-items:center;gap:.4rem">
-              <label style="font-size:.8rem;color:var(--text-light);font-weight:normal">Colour:</label>
+              <label for="budgetCatColor" style="font-size:.8rem;color:var(--text-light);font-weight:normal">Colour:</label>
               <input type="color" id="budgetCatColor" value="#3b82f6" style="width:42px;height:34px;padding:2px 3px;border-radius:6px;border:1px solid var(--border);cursor:pointer">
             </div>
             <button class="btn btn-primary btn-sm" onclick="app.addCategory()"><i class="fas fa-plus"></i> Add Category</button>
