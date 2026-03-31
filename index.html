@@ -562,10 +562,13 @@ const SUPABASE_URL = 'https://rldzltswtxcpkggaanzt.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_A_1udN3JRg-GiMziBfpnkA_jv9kmsTB';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  global: {
+    headers: { apikey: SUPABASE_ANON_KEY }
+  },
   auth: {
     storage: window.localStorage,
     storageKey: 'buildtracker_auth',
-    flowType: 'implicit',
+    flowType: 'pkce',
     persistSession: true,
     detectSessionInUrl: true,
   }
