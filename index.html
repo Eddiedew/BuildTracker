@@ -823,7 +823,9 @@ const app = {
 
     sb.auth.onAuthStateChange(async (event, session) => {
       if(this._loginInProgress) return;
-      if(session) {
+      // Ignore INITIAL_SESSION — handled by getSession() below to avoid double load
+      if(event === 'INITIAL_SESSION') return;
+      if(session && !this.currentUserId) {
         this.currentUserId = session.user.id;
         this.currentEmail = session.user.email;
         this.currentUser = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
@@ -839,7 +841,6 @@ const app = {
           alert('Plan upgraded! Welcome to BuildTracker '+(PLAN_LIMITS[this.userPlan]?.label||'Pro')+'.');
         }
       } else if(event === 'SIGNED_OUT') {
-        // Only return to landing on explicit sign-out, not on initial page load
         this.currentUserId = null;
         this.currentUser = null;
         this.currentEmail = null;
@@ -942,16 +943,25 @@ const app = {
   render() {
     this.renderStats();
     this.renderOverview();
-    this.renderProjects();
-    this.renderTasks();
-    this.renderQuotes();
-    this.renderInvoices();
-    this.renderBudget();
-    this.renderClients();
-    this.renderLogs();
-    this.renderDocuments();
-    this.renderTeam();
     this.renderNotifications();
+    const active = document.querySelector('.content-section.active')?.id;
+    const tabMap = {
+      projects:  () => this.renderProjects(),
+      tasks:     () => this.renderTasks(),
+      quotes:    () => this.renderQuotes(),
+      invoices:  () => this.renderInvoices(),
+      budget:    () => this.renderBudget(),
+      clients:   () => this.renderClients(),
+      logs:      () => this.renderLogs(),
+      documents: () => this.renderDocuments(),
+      team:      () => this.renderTeam(),
+    };
+    if(active && tabMap[active]) {
+      tabMap[active]();
+    } else {
+      // Fallback: render all (e.g. on initial load before a tab is active)
+      Object.values(tabMap).forEach(fn => fn());
+    }
   },
 
   renderStats() {
