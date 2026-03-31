@@ -562,13 +562,10 @@ const SUPABASE_URL = 'https://rldzltswtxcpkggaanzt.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_A_1udN3JRg-GiMziBfpnkA_jv9kmsTB';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  global: {
-    headers: { apikey: SUPABASE_ANON_KEY }
-  },
   auth: {
     storage: window.localStorage,
     storageKey: 'buildtracker_auth',
-    flowType: 'pkce',
+    flowType: 'implicit',
     persistSession: true,
     detectSessionInUrl: true,
   }
@@ -690,7 +687,6 @@ const app = {
   },
 
   async load() {
-    console.log('[load] starting — userId:', this.currentUserId);
     try {
       const t = p => Promise.race([p, new Promise(res => setTimeout(() => res({data:null,error:{message:'timeout'}}), 8000))]);
       const results = await Promise.allSettled([
@@ -824,13 +820,10 @@ const app = {
     if(localStorage.getItem('buildtracker_dark')==='1') this.applyDark(true);
 
     this._loginInProgress = false;
-    this._loadStarted = false;
 
     sb.auth.onAuthStateChange(async (event, session) => {
-      console.log('[auth] onAuthStateChange event:', event, '| session:', session ? session.user?.email : 'null');
       if(this._loginInProgress) return;
-      if(session && !this._loadStarted) {
-        this._loadStarted = true;
+      if(session) {
         this.currentUserId = session.user.id;
         this.currentEmail = session.user.email;
         this.currentUser = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
@@ -846,7 +839,6 @@ const app = {
           alert('Plan upgraded! Welcome to BuildTracker '+(PLAN_LIMITS[this.userPlan]?.label||'Pro')+'.');
         }
       } else if(event === 'SIGNED_OUT') {
-        this._loadStarted = false;
         this.currentUserId = null;
         this.currentUser = null;
         this.currentEmail = null;
@@ -857,11 +849,9 @@ const app = {
       }
     });
 
-    // Check session on page load — fallback if onAuthStateChange doesn't fire
+    // Check session on page load — show loading screen until we know
     sb.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('[auth] getSession result:', session ? session.user?.email : 'null', '| _loadStarted:', this._loadStarted);
-      if(session && !this._loadStarted) {
-        this._loadStarted = true;
+      if(session && !this.currentUserId) {
         this.currentUserId = session.user.id;
         this.currentEmail = session.user.email;
         this.currentUser = session.user.user_metadata?.full_name || session.user.email.split('@')[0];
@@ -872,7 +862,7 @@ const app = {
         document.getElementById('currency').value = this.currency;
         document.getElementById('loadingScreen').classList.add('hidden');
         this.showApp();
-      } else if(!this._loadStarted) {
+      } else if(!this.currentUserId) {
         document.getElementById('loadingScreen').classList.add('hidden');
         document.getElementById('landing').classList.add('active');
       }
