@@ -703,12 +703,6 @@ const app = {
         t(sb.from('expense_categories').select('*').order('name')),
         t(sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).maybeSingle()),
       ]);
-      const labels = ['clients','projects','tasks','milestones','quotes','invoices','logs','documents','team','expenses','expense_categories','profiles'];
-      results.forEach((r,i) => {
-        if(r.status==='rejected') console.error(`[load] ${labels[i]} rejected: ${r.reason}`);
-        else if(r.value?.error) console.error(`[load] ${labels[i]} FAILED — code: ${r.value.error.code} | msg: ${r.value.error.message} | hint: ${r.value.error.hint}`);
-        else console.log(`[load] ${labels[i]}: OK — ${(r.value?.data||[]).length} rows`);
-      });
       const get = (i) => results[i].status==='fulfilled' ? (results[i].value.data||[]) : [];
       const profile = results[11].status==='fulfilled' ? results[11].value.data : null;
       this.data = {
