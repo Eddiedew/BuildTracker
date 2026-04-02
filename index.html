@@ -896,13 +896,15 @@ const app = {
 
     this._booted = false;
 
-    sb.auth.onAuthStateChange(async (event, session) => {
+    sb.auth.onAuthStateChange((event, session) => {
+      // IMPORTANT: Do NOT await inside this callback — it runs during
+      // Supabase _initialize(), and blocking here deadlocks all queries.
+      // Use setTimeout(0) to defer boot until after init completes.
       if(session && !this._booted) {
-        await this._bootApp(session);
+        setTimeout(() => this._bootApp(session), 0);
       } else if(event === 'SIGNED_IN' && session) {
-        // Re-login after a sign-out within the same page session
         this._booted = false;
-        await this._bootApp(session);
+        setTimeout(() => this._bootApp(session), 0);
       } else if(event === 'SIGNED_OUT') {
         this._booted = false;
         this.currentUserId = null;
@@ -915,10 +917,10 @@ const app = {
       }
     });
 
-    // Fallback: if onAuthStateChange hasn't fired yet, check session directly
-    sb.auth.getSession().then(async ({ data: { session } }) => {
+    // Fallback: if onAuthStateChange hasn't fired after init, check directly
+    sb.auth.getSession().then(({ data: { session } }) => {
       if(session && !this._booted) {
-        await this._bootApp(session);
+        setTimeout(() => this._bootApp(session), 0);
       } else if(!session && !this._booted) {
         document.getElementById('loadingScreen').classList.add('hidden');
         document.getElementById('landing').classList.add('active');
