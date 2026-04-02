@@ -686,37 +686,58 @@ const app = {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   },
 
+  _timeout(p, ms) {
+    return Promise.race([p, new Promise(res => setTimeout(() => res({data:null,error:{message:'timeout'}}), ms))]);
+  },
+
   _checkResult(label, result) {
     if(result.status !== 'fulfilled') { console.error(`[load] ${label} rejected:`, result.reason); return []; }
     const {data, error} = result.value;
-    if(error) { console.error(`[load] ${label} error:`, error.message, error.code||'', error.hint||''); return []; }
+    if(error) {
+      if(error.message === 'timeout') console.warn(`[load] ${label} timed out`);
+      else console.error(`[load] ${label} error:`, error.message, error.code||'', error.hint||'');
+      return [];
+    }
     return data || [];
+  },
+
+  async _runCoreQueries() {
+    const core = await Promise.allSettled([
+      this._timeout(sb.from('projects').select('*').order('created_at'), 25000),
+      this._timeout(sb.from('clients').select('*').order('created_at'), 25000),
+      this._timeout(sb.from('tasks').select('*').order('created_at'), 25000),
+      this._timeout(sb.from('milestones').select('*').order('date'), 25000),
+      this._timeout(sb.from('invoices').select('*').order('created_at'), 25000),
+      this._timeout(sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).maybeSingle(), 25000),
+    ]);
+    const profile = core[5].status==='fulfilled' && !core[5].value.error ? core[5].value.data : null;
+    const data = {
+      projects:  this._checkResult('projects', core[0]),
+      clients:   this._checkResult('clients', core[1]),
+      tasks:     this._checkResult('tasks', core[2]),
+      milestones:this._checkResult('milestones', core[3]),
+      invoices:  this._checkResult('invoices', core[4]),
+    };
+    // Check if all core tables came back empty due to timeouts
+    const allEmpty = !data.projects.length && !data.clients.length && !data.tasks.length && !data.invoices.length;
+    return { data, profile, allEmpty };
   },
 
   async load() {
     // Phase 1: core tables needed for dashboard + profile (show app fast)
     try {
-      const t = p => Promise.race([p, new Promise(res => setTimeout(() => res({data:null,error:{message:'timeout'}}), 8000))]);
-      const core = await Promise.allSettled([
-        t(sb.from('projects').select('*').order('created_at')),
-        t(sb.from('clients').select('*').order('created_at')),
-        t(sb.from('tasks').select('*').order('created_at')),
-        t(sb.from('milestones').select('*').order('date')),
-        t(sb.from('invoices').select('*').order('created_at')),
-        t(sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).maybeSingle()),
-      ]);
-      const profile = core[5].status==='fulfilled' && !core[5].value.error ? core[5].value.data : null;
-      this.data = {
-        ...this.defaultData(),
-        projects:  this._checkResult('projects', core[0]),
-        clients:   this._checkResult('clients', core[1]),
-        tasks:     this._checkResult('tasks', core[2]),
-        milestones:this._checkResult('milestones', core[3]),
-        invoices:  this._checkResult('invoices', core[4]),
-      };
-      this.userPlan = profile?.plan||'free';
-      this.userPlanStatus = profile?.plan_status||'active';
-      if(profile?.name) this.currentUser = profile.name;
+      let result = await this._runCoreQueries();
+
+      // If everything timed out, DB may be waking from cold start — retry once
+      if(result.allEmpty) {
+        console.warn('[load] All core queries empty/timed out — retrying (cold start?)');
+        result = await this._runCoreQueries();
+      }
+
+      this.data = { ...this.defaultData(), ...result.data };
+      this.userPlan = result.profile?.plan||'free';
+      this.userPlanStatus = result.profile?.plan_status||'active';
+      if(result.profile?.name) this.currentUser = result.profile.name;
     } catch(e) { console.error('Core load error:',e); this.data = this.defaultData(); }
 
     // Phase 2: secondary tables (loaded in background, re-render when done)
@@ -725,14 +746,13 @@ const app = {
 
   async _loadSecondary() {
     try {
-      const t = p => Promise.race([p, new Promise(res => setTimeout(() => res({data:null,error:{message:'timeout'}}), 8000))]);
       const sec = await Promise.allSettled([
-        t(sb.from('quotes').select('*').order('created_at')),
-        t(sb.from('daily_logs').select('*').order('date',{ascending:false})),
-        t(sb.from('documents').select('*').order('created_at')),
-        t(sb.from('team_members').select('*').order('name')),
-        t(sb.from('expenses').select('*').order('date')),
-        t(sb.from('expense_categories').select('*').order('name')),
+        this._timeout(sb.from('quotes').select('*').order('created_at'), 25000),
+        this._timeout(sb.from('daily_logs').select('*').order('date',{ascending:false}), 25000),
+        this._timeout(sb.from('documents').select('*').order('created_at'), 25000),
+        this._timeout(sb.from('team_members').select('*').order('name'), 25000),
+        this._timeout(sb.from('expenses').select('*').order('date'), 25000),
+        this._timeout(sb.from('expense_categories').select('*').order('name'), 25000),
       ]);
       this.data.quotes = this._checkResult('quotes', sec[0]);
       this.data.logs = this._checkResult('daily_logs', sec[1]);
@@ -852,6 +872,15 @@ const app = {
     this.isDemoMode = false;
     this.currency = localStorage.getItem('buildtracker_currency')||'ZAR';
     this.projectView = localStorage.getItem('buildtracker_view')||'table';
+
+    // Ensure access token is fresh before querying — onAuthStateChange can
+    // fire mid-refresh with a stale JWT, causing all queries to fail/timeout
+    const expiresAt = session.expires_at || 0;
+    if(expiresAt < Math.floor(Date.now()/1000) + 30) {
+      const { data: { session: fresh } } = await sb.auth.refreshSession();
+      if(!fresh) { this._booted = false; document.getElementById('loadingScreen').classList.add('hidden'); document.getElementById('landing').classList.add('active'); return; }
+    }
+
     await this.load();
     document.getElementById('currency').value = this.currency;
     document.getElementById('loadingScreen').classList.add('hidden');
