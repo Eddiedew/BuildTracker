@@ -508,11 +508,11 @@ body.dark .gantt-month-cell{background:#1e3a5f!important;color:#93c5fd!important
     </div>
     <div class="two-col">
       <div class="card">
-        <div class="card-header"><h3><i class="fas fa-file-invoice"></i> Quotes</h3></div>
+        <div class="card-header"><h3><i class="fas fa-file-invoice"></i> Quotes</h3><button class="btn btn-primary btn-sm" onclick="app.openModal('quote')">+ Add Quote</button></div>
         <div class="card-body" id="detailQuotes"></div>
       </div>
       <div class="card">
-        <div class="card-header"><h3><i class="fas fa-file-invoice-dollar"></i> Invoices</h3></div>
+        <div class="card-header"><h3><i class="fas fa-file-invoice-dollar"></i> Invoices</h3><button class="btn btn-primary btn-sm" onclick="app.openModal('invoice')">+ Add Invoice</button></div>
         <div class="card-body" id="detailInvoices"></div>
       </div>
     </div>
@@ -2125,10 +2125,19 @@ const app = {
     document.getElementById('modalBody').innerHTML = html;
     if(type==='quote'||type==='invoice') this.addQuoteItem();
     // Pre-select current project in task/milestone dropdowns
-    if(this.currentProjectId && (type==='task'||type==='milestone'||type==='expense')) {
-      const selId = type==='task'?'f_proj':type==='milestone'?'f_mproj':'f_eproj';
-      const sel = document.getElementById(selId);
-      if(sel) sel.value = this.currentProjectId;
+    if(this.currentProjectId) {
+      const selMap = {task:'f_proj',milestone:'f_mproj',expense:'f_eproj',quote:'f_qproj',invoice:'f_iproj'};
+      const selId = selMap[type];
+      if(selId) { const sel = document.getElementById(selId); if(sel) sel.value = this.currentProjectId; }
+      // Also pre-select the client linked to this project for quotes/invoices
+      if(type==='quote'||type==='invoice') {
+        const proj = this.data.projects.find(x=>x.id===this.currentProjectId);
+        if(proj?.clientId) {
+          const cSelId = type==='quote'?'f_qclient':'f_iclient';
+          const cSel = document.getElementById(cSelId);
+          if(cSel) cSel.value = proj.clientId;
+        }
+      }
     }
     document.getElementById('modal').classList.add('active');
   },
