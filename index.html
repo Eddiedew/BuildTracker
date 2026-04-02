@@ -1393,6 +1393,40 @@ const app = {
   },
 
   getCats() { return this.data.expenseCategories || []; },
+  _renderCategoryManager() {
+    const H = s => this.escapeHtml(s);
+    const inUse = new Set((this.data.expenses||[]).map(e=>e.type));
+    return `<div class="card">
+      <div class="card-header"><h3><i class="fas fa-tags"></i> Expense Categories</h3><span style="font-size:.8rem;color:var(--text-light)">Available across all projects</span></div>
+      <div class="card-body">
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem" id="catChips">
+          ${this.getCats().map(c=>`
+            <div id="cat_${c.id}" style="display:inline-flex;align-items:center;gap:.45rem;background:#f9fafb;border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.82rem">
+              <span style="width:10px;height:10px;border-radius:2px;background:${c.color};flex-shrink:0"></span>
+              <span style="font-weight:500">${H(c.name)}</span>
+              ${c.isDefault?'<span style="font-size:.65rem;color:var(--text-light);margin-left:.15rem">(default)</span>':''}
+              ${inUse.has(c.name)?'<span style="font-size:.65rem;color:#1565c0;margin-left:.1rem">●</span>':''}
+              <button onclick="app.editCategory('${c.id}')" title="Edit category" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:.75rem;line-height:1;padding:0 .1rem" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#9ca3af'"><i class="fas fa-pen"></i></button>
+              <button onclick="app.deleteCategory('${c.name.replace(/'/g,"\\\\'")}')" title="Delete category" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:.9rem;line-height:1;padding:0 .1rem;margin-left:.1rem" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#9ca3af'">✕</button>
+            </div>`).join('')}
+          ${this.getCats().length===0?'<p style="color:var(--text-light);font-size:.85rem">No categories yet.</p>':''}
+        </div>
+        <div style="border-top:1px solid var(--border);padding-top:.9rem">
+          <label for="budgetCatName" style="font-weight:600;font-size:.83rem;display:block;margin-bottom:.5rem"><i class="fas fa-plus-circle" style="color:var(--primary)"></i> Add New Category</label>
+          <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
+            <input id="budgetCatName" class="search-input" style="flex:1;min-width:180px" placeholder="Category name (e.g. Consultants, Safety)">
+            <div style="display:flex;align-items:center;gap:.4rem">
+              <label for="budgetCatColor" style="font-size:.8rem;color:var(--text-light);font-weight:normal">Colour:</label>
+              <input type="color" id="budgetCatColor" value="#3b82f6" style="width:42px;height:34px;padding:2px 3px;border-radius:6px;border:1px solid var(--border);cursor:pointer">
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="app.addCategory()"><i class="fas fa-plus"></i> Add Category</button>
+          </div>
+          <p id="catError" style="color:var(--danger);font-size:.8rem;margin-top:.4rem;display:none"></p>
+          <p style="font-size:.75rem;color:var(--text-light);margin-top:.5rem"><i class="fas fa-info-circle"></i> Blue dot = category currently in use. Default categories can be deleted — existing expenses are not affected.</p>
+        </div>
+      </div>
+    </div>`;
+  },
   getCatNames() { return this.getCats().map(c=>c.name); },
   getCatColor(name) { const c = this.getCats().find(x=>x.name===name); return c ? c.color : '#6b7280'; },
 
@@ -1479,38 +1513,7 @@ const app = {
       html += `</tbody></table></div></div>`;
     }
 
-    // ── Inline Categories Manager ─────────────────────────────────
-    const inUse = new Set((this.data.expenses||[]).map(e=>e.type));
-    html += `<div class="card">
-      <div class="card-header"><h3><i class="fas fa-tags"></i> Expense Categories</h3><span style="font-size:.8rem;color:var(--text-light)">Available across all projects</span></div>
-      <div class="card-body">
-        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.1rem" id="catChips">
-          ${this.getCats().map(c=>`
-            <div id="cat_${c.id}" style="display:inline-flex;align-items:center;gap:.45rem;background:#f9fafb;border:1px solid var(--border);border-radius:20px;padding:.3rem .75rem;font-size:.82rem">
-              <span style="width:10px;height:10px;border-radius:2px;background:${c.color};flex-shrink:0"></span>
-              <span style="font-weight:500">${H(c.name)}</span>
-              ${c.isDefault?'<span style="font-size:.65rem;color:var(--text-light);margin-left:.15rem">(default)</span>':''}
-              ${inUse.has(c.name)?'<span style="font-size:.65rem;color:#1565c0;margin-left:.1rem">●</span>':''}
-              <button onclick="app.editCategory('${c.id}')" title="Edit category" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:.75rem;line-height:1;padding:0 .1rem" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='#9ca3af'"><i class="fas fa-pen"></i></button>
-              <button onclick="app.deleteCategory('${c.name.replace(/'/g,"\\'")}')" title="Delete category" style="background:none;border:none;cursor:pointer;color:#9ca3af;font-size:.9rem;line-height:1;padding:0 .1rem;margin-left:.1rem" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='#9ca3af'">✕</button>
-            </div>`).join('')}
-          ${this.getCats().length===0?'<p style="color:var(--text-light);font-size:.85rem">No categories yet.</p>':''}
-        </div>
-        <div style="border-top:1px solid var(--border);padding-top:.9rem">
-          <label for="budgetCatName" style="font-weight:600;font-size:.83rem;display:block;margin-bottom:.5rem"><i class="fas fa-plus-circle" style="color:var(--primary)"></i> Add New Category</label>
-          <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap">
-            <input id="budgetCatName" class="search-input" style="flex:1;min-width:180px" placeholder="Category name (e.g. Consultants, Safety)">
-            <div style="display:flex;align-items:center;gap:.4rem">
-              <label for="budgetCatColor" style="font-size:.8rem;color:var(--text-light);font-weight:normal">Colour:</label>
-              <input type="color" id="budgetCatColor" value="#3b82f6" style="width:42px;height:34px;padding:2px 3px;border-radius:6px;border:1px solid var(--border);cursor:pointer">
-            </div>
-            <button class="btn btn-primary btn-sm" onclick="app.addCategory()"><i class="fas fa-plus"></i> Add Category</button>
-          </div>
-          <p id="catError" style="color:var(--danger);font-size:.8rem;margin-top:.4rem;display:none"></p>
-          <p style="font-size:.75rem;color:var(--text-light);margin-top:.5rem"><i class="fas fa-info-circle"></i> Blue dot = category currently in use. Default categories can be deleted — existing expenses are not affected.</p>
-        </div>
-      </div>
-    </div>`;
+    html += this._renderCategoryManager();
 
     document.getElementById('budget').innerHTML = html;
   },
@@ -2108,7 +2111,7 @@ const app = {
     else if(type==='expense') html=`
       <div class="form-group"><label>Description</label><input id="f_edesc" placeholder="e.g. Foundation concrete mix"></div>
       <div class="form-row">
-        <div class="form-group"><label>Category</label><select id="f_etype">${this.getCatNames().map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Category</label><select id="f_etype" onchange="app._onCatSelectChange(this)">${this.getCatNames().map(t=>`<option>${t}</option>`).join('')}<option value="__new__">+ New Category...</option></select><div id="newCatInline" style="display:none;margin-top:.5rem"><div style="display:flex;gap:.4rem;align-items:center"><input id="f_newCatName" class="search-input" style="flex:1;padding:.35rem .6rem;font-size:.85rem" placeholder="Category name"><input type="color" id="f_newCatColor" value="#3b82f6" style="width:32px;height:32px;padding:1px 2px;border-radius:4px;border:1px solid var(--border);cursor:pointer"><button type="button" class="btn btn-primary btn-sm" onclick="app._addCatFromModal()" style="padding:.3rem .6rem;font-size:.8rem">Add</button></div><p id="newCatError" style="color:var(--danger);font-size:.78rem;margin-top:.3rem;display:none"></p></div></div>
         <div class="form-group"><label>Project</label><select id="f_eproj"><option value="">None</option>${projOpts}</select></div>
       </div>
       <div class="form-row">
@@ -2122,8 +2125,9 @@ const app = {
     document.getElementById('modalBody').innerHTML = html;
     if(type==='quote'||type==='invoice') this.addQuoteItem();
     // Pre-select current project in task/milestone dropdowns
-    if(this.currentProjectId && (type==='task'||type==='milestone')) {
-      const sel = document.getElementById(type==='task'?'f_proj':'f_mproj');
+    if(this.currentProjectId && (type==='task'||type==='milestone'||type==='expense')) {
+      const selId = type==='task'?'f_proj':type==='milestone'?'f_mproj':'f_eproj';
+      const sel = document.getElementById(selId);
       if(sel) sel.value = this.currentProjectId;
     }
     document.getElementById('modal').classList.add('active');
@@ -2638,6 +2642,48 @@ const app = {
     document.getElementById('modal').classList.add('active');
   },
 
+  _onCatSelectChange(sel) {
+    const panel = document.getElementById('newCatInline');
+    if(sel.value === '__new__') {
+      panel.style.display = 'block';
+      document.getElementById('f_newCatName')?.focus();
+    } else {
+      panel.style.display = 'none';
+    }
+  },
+
+  async _addCatFromModal() {
+    const nameEl = document.getElementById('f_newCatName');
+    const colorEl = document.getElementById('f_newCatColor');
+    const err = document.getElementById('newCatError');
+    const name = (nameEl?.value||'').trim();
+    const color = colorEl?.value || '#6b7280';
+    if(!name) { if(err){err.textContent='Please enter a category name.';err.style.display='block';} return; }
+    if(this.getCats().find(c=>c.name.toLowerCase()===name.toLowerCase())) { if(err){err.textContent='A category with this name already exists.';err.style.display='block';} return; }
+    const rec = await this.dbInsert('expense_categories',{name,color,isDefault:false});
+    if(!rec) return;
+    if(!this.data.expenseCategories) this.data.expenseCategories=[];
+    this.data.expenseCategories.push(rec);
+    // Update the select dropdown: add new option before the "+ New" option, select it
+    const sel = document.getElementById('f_etype');
+    const newOpt = document.createElement('option');
+    newOpt.value = name;
+    newOpt.textContent = name;
+    sel.insertBefore(newOpt, sel.querySelector('option[value="__new__"]'));
+    sel.value = name;
+    document.getElementById('newCatInline').style.display = 'none';
+    nameEl.value = '';
+    if(err) err.style.display = 'none';
+  },
+
+  _refreshCategoryView() {
+    if(this.currentProjectId && document.getElementById('projectDetail')?.classList.contains('active')) {
+      this.showProjectDetail(this.currentProjectId);
+    } else {
+      this.renderBudget();
+    }
+  },
+
   async addCategory() {
     const nameEl = document.getElementById('budgetCatName');
     const colorEl = document.getElementById('budgetCatColor');
@@ -2650,7 +2696,7 @@ const app = {
     if(!rec) return;
     if(!this.data.expenseCategories) this.data.expenseCategories=[];
     this.data.expenseCategories.push(rec);
-    this.renderBudget();
+    this._refreshCategoryView();
   },
 
   async deleteCategory(name) {
@@ -2663,7 +2709,7 @@ const app = {
       if(!ok) return;
     }
     this.data.expenseCategories = this.getCats().filter(c=>c.name!==name);
-    this.renderBudget();
+    this._refreshCategoryView();
   },
 
   editCategory(id) {
@@ -2677,7 +2723,7 @@ const app = {
       <input id="catEditName_${id}" value="${H(cat.name)}" style="height:28px;padding:.2rem .5rem;border:1px solid var(--border);border-radius:4px;font-size:.82rem;width:120px">
       <input type="color" id="catEditColor_${id}" value="${cat.color}" style="width:28px;height:28px;padding:1px 2px;border-radius:4px;border:1px solid var(--border);cursor:pointer">
       <button onclick="app.saveEditCategory('${id}','${H(cat.name)}')" class="btn btn-primary btn-sm" style="height:28px;padding:.15rem .6rem;font-size:.78rem">Save</button>
-      <button onclick="app.renderBudget()" class="btn btn-secondary btn-sm" style="height:28px;padding:.15rem .5rem;font-size:.78rem">✕</button>
+      <button onclick="app._refreshCategoryView()" class="btn btn-secondary btn-sm" style="height:28px;padding:.15rem .5rem;font-size:.78rem">✕</button>
     `;
     document.getElementById('catEditName_' + id)?.focus();
   },
@@ -2700,7 +2746,7 @@ const app = {
     }
     const cat = this.getCats().find(c => c.id === id);
     if(cat) { cat.name = newName; cat.color = newColor; }
-    this.renderBudget();
+    this._refreshCategoryView();
   },
 
   openChangePw() {
@@ -2740,7 +2786,7 @@ const app = {
     document.getElementById('modalBody').innerHTML = `
       <div class="form-group"><label>Description</label><input id="f_edesc" value="${H(e.description)}"></div>
       <div class="form-row">
-        <div class="form-group"><label>Category</label><select id="f_etype">${this.getCatNames().map(t=>`<option${t===e.type?' selected':''}>${t}</option>`).join('')}</select></div>
+        <div class="form-group"><label>Category</label><select id="f_etype" onchange="app._onCatSelectChange(this)">${this.getCatNames().map(t=>`<option${t===e.type?' selected':''}>${t}</option>`).join('')}<option value="__new__">+ New Category...</option></select><div id="newCatInline" style="display:none;margin-top:.5rem"><div style="display:flex;gap:.4rem;align-items:center"><input id="f_newCatName" class="search-input" style="flex:1;padding:.35rem .6rem;font-size:.85rem" placeholder="Category name"><input type="color" id="f_newCatColor" value="#3b82f6" style="width:32px;height:32px;padding:1px 2px;border-radius:4px;border:1px solid var(--border);cursor:pointer"><button type="button" class="btn btn-primary btn-sm" onclick="app._addCatFromModal()" style="padding:.3rem .6rem;font-size:.8rem">Add</button></div><p id="newCatError" style="color:var(--danger);font-size:.78rem;margin-top:.3rem;display:none"></p></div></div>
         <div class="form-group"><label>Project</label><select id="f_eproj"><option value="">None</option>${projOpts}</select></div>
       </div>
       <div class="form-row">
