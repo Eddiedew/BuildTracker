@@ -686,24 +686,33 @@ const app = {
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   },
 
+  _checkResult(label, result) {
+    if(result.status !== 'fulfilled') { console.error(`[load] ${label} rejected:`, result.reason); return []; }
+    const {data, error} = result.value;
+    if(error) { console.error(`[load] ${label} error:`, error.message, error.code||'', error.hint||''); return []; }
+    return data || [];
+  },
+
   async load() {
     // Phase 1: core tables needed for dashboard + profile (show app fast)
     try {
       const t = p => Promise.race([p, new Promise(res => setTimeout(() => res({data:null,error:{message:'timeout'}}), 8000))]);
       const core = await Promise.allSettled([
-        t(sb.from('projects').select('id,owner_id,name,description,status,budget,spent,"startDate",deadline,"clientId",created_at').order('created_at')),
-        t(sb.from('clients').select('id,owner_id,name,email,phone,company').order('created_at')),
-        t(sb.from('tasks').select('id,owner_id,name,"projectId",completed,"dueDate","assignedTo"').order('created_at')),
-        t(sb.from('milestones').select('id,owner_id,"projectId",name,date,completed').order('date')),
-        t(sb.from('invoices').select('id,owner_id,"clientId","projectId",items,amount,status,date,"dueDate"').order('created_at')),
+        t(sb.from('projects').select('*').order('created_at')),
+        t(sb.from('clients').select('*').order('created_at')),
+        t(sb.from('tasks').select('*').order('created_at')),
+        t(sb.from('milestones').select('*').order('date')),
+        t(sb.from('invoices').select('*').order('created_at')),
         t(sb.from('profiles').select('plan,plan_status,name').eq('id',this.currentUserId).maybeSingle()),
       ]);
-      const get = (i) => core[i].status==='fulfilled' ? (core[i].value.data||[]) : [];
-      const profile = core[5].status==='fulfilled' ? core[5].value.data : null;
+      const profile = core[5].status==='fulfilled' && !core[5].value.error ? core[5].value.data : null;
       this.data = {
         ...this.defaultData(),
-        projects:get(0), clients:get(1), tasks:get(2),
-        milestones:get(3), invoices:get(4)
+        projects:  this._checkResult('projects', core[0]),
+        clients:   this._checkResult('clients', core[1]),
+        tasks:     this._checkResult('tasks', core[2]),
+        milestones:this._checkResult('milestones', core[3]),
+        invoices:  this._checkResult('invoices', core[4]),
       };
       this.userPlan = profile?.plan||'free';
       this.userPlanStatus = profile?.plan_status||'active';
@@ -718,20 +727,19 @@ const app = {
     try {
       const t = p => Promise.race([p, new Promise(res => setTimeout(() => res({data:null,error:{message:'timeout'}}), 8000))]);
       const sec = await Promise.allSettled([
-        t(sb.from('quotes').select('id,owner_id,"clientId","projectId",items,status,date').order('created_at')),
-        t(sb.from('daily_logs').select('id,owner_id,"projectId",date,weather,crew,notes').order('date',{ascending:false})),
-        t(sb.from('documents').select('id,owner_id,"projectId",name,type,size,date,"uploadedBy",storage_path').order('created_at')),
-        t(sb.from('team_members').select('id,owner_id,name,role,email,phone,color').order('name')),
-        t(sb.from('expenses').select('id,owner_id,"projectId",description,type,planned,actual,date,notes').order('date')),
-        t(sb.from('expense_categories').select('id,owner_id,name,color,"isDefault"').order('name')),
+        t(sb.from('quotes').select('*').order('created_at')),
+        t(sb.from('daily_logs').select('*').order('date',{ascending:false})),
+        t(sb.from('documents').select('*').order('created_at')),
+        t(sb.from('team_members').select('*').order('name')),
+        t(sb.from('expenses').select('*').order('date')),
+        t(sb.from('expense_categories').select('*').order('name')),
       ]);
-      const get = (i) => sec[i].status==='fulfilled' ? (sec[i].value.data||[]) : [];
-      this.data.quotes = get(0);
-      this.data.logs = get(1);
-      this.data.documents = get(2);
-      this.data.team = get(3);
-      this.data.expenses = get(4);
-      this.data.expenseCategories = get(5);
+      this.data.quotes = this._checkResult('quotes', sec[0]);
+      this.data.logs = this._checkResult('daily_logs', sec[1]);
+      this.data.documents = this._checkResult('documents', sec[2]);
+      this.data.team = this._checkResult('team_members', sec[3]);
+      this.data.expenses = this._checkResult('expenses', sec[4]);
+      this.data.expenseCategories = this._checkResult('expense_categories', sec[5]);
       if(!this.data.expenseCategories.length) this.data.expenseCategories = this.defaultData().expenseCategories;
       this.render();
     } catch(e) { console.error('Secondary load error:',e); }
